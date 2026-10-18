@@ -2,6 +2,16 @@
 
 Nuxt 4.6.2、Vue 3、TypeScript、Tailwind CSS 4のSPA。Node 24.22.0とpnpm 10.34.7を使い、依存はルートの `pnpm-lock.yaml` に固定する。
 
+## Nuxt 5への移行方針
+
+Nuxt 4のまま `future.compatibilityVersion: 5` を有効にし、Nuxt 4で先行利用できるNuxt 5の既定動作を適用する。`compatibilityDate` は別の設定であり、Nuxtのメジャーバージョンを選ぶものではない。
+
+画面・コンポーネント・composableは標準の `app/` 配下に置き、TypeScriptはNuxtが生成するproject referencesを使う。生成された `.nuxt/` の実装へ直接依存したり、独自の `baseUrl`・aliasで型解決を上書きしたりしない。
+
+APIの業務処理はFastAPI、HTTPクライアントは `app/api/`、画面の通信状態はcomposableに分ける。現在はNuxtのserverルートを持たず、h3・NitroのAPIを直接使わない。将来serverルートを追加する場合は、Nuxt 4.6以降で利用できる公開APIの `nuxt/server` から明示的にimportする。
+
+Nuxt更新時はlockfileを更新し、`pnpm check:fe` と `pnpm test:e2e` で型・静的生成・実HTTP通信を確認する。既存CIもこの互換設定を使う。今回の設定ではNuxt 5本体やNitro 3への移行は検証していない。理由と確認範囲は [ADR-0008](../docs/adr/0008-nuxt5-compatibility.md) を参照する。
+
 ## 起動
 
 リポジトリのルートで実行する。backendの起動手順は [Backend](../backend/README.md) を参照する。
