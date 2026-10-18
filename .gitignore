@@ -40,3 +40,7 @@ test-results/
 
 # Logs
 *.log
+
+# Local verification logs
+.logs/
+/frontend/dist

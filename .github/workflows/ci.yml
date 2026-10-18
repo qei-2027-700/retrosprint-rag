@@ -1,0 +1,39 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: '0.8.15'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --directory backend --frozen
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir frontend exec playwright install --with-deps chromium
+      - run: mkdir -p .logs && pnpm check > .logs/check.log 2>&1
+      - name: Show validation log
+        if: always()
+        run: tail -100 .logs/check.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: validation-results
+          include-hidden-files: true
+          path: |
+            .logs/
+            frontend/test-results/
+          retention-days: 7

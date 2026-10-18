@@ -6,7 +6,7 @@
 
 ## 現在の状態
 
-2026年10月18日時点では設計・計画段階。このフォルダには設計資料があり、アプリケーションコード、依存定義、起動・デプロイ用スクリプトはまだない。アプリのテスト、CDK synth、AWS上の動作検証も未実施。
+2026年10月18日時点で、FastAPIのhealth・開発用echo、Nuxt 4の接続テスト画面、OpenAPIによる型生成、ローカル検証コマンドとGitHub Actions workflowを実装している。業務機能、DB・AWS接続、CDK・デプロイは未実装。GitHub Actions上での成功は未確認。
 
 本READMEは、[開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) の最新方針と既存の3文書をまとめた入口となる。既存文書に残る仮称 `rag-portfolio`、バックエンド選定、期限については、本READMEとIssue #1に記載した更新後の方針を参照する。ディレクトリ構成は、その後の検討を反映した [配置方針](docs/architecture/repository-layout.md) に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
 
@@ -134,9 +134,30 @@ retrosprint-rag/
 
 ## 起動・検証
 
-現時点で実行可能な起動コマンドはない。実装に合わせて、必要なツールの版、環境変数、ローカル起動、テスト、デプロイ・削除手順を追加する。
+Node 24.22.0（`.nvmrc`）、Python 3.13.5（`backend/.python-version`）、pnpm 10.34.7、uv 0.8.15を使う。依存は `pnpm-lock.yaml` と `backend/uv.lock` に固定する。
 
-CIにはGitHub Actionsを採用する。frontendの型・テスト・ビルド、backendのlint・型・テスト、OpenAPI契約、CDK synthを、実行コマンドの整備に合わせて組み込む。通常CIと課金対象の実環境評価は分ける。workflowは未実装で、AWSデプロイの実行条件は未確定。[採用ADR](docs/adr/0005-github-actions-ci.md) を参照する。
+```sh
+uv sync --directory backend --frozen
+pnpm install --frozen-lockfile
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+別々のターミナルで `pnpm dev:be` と `pnpm dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
+
+検証時は開発サーバーを停止して3000・8000番ポートを空ける。
+
+```sh
+pnpm --dir frontend exec playwright install chromium
+mkdir -p .logs
+pnpm check > .logs/check.log 2>&1
+```
+
+`pnpm check` はBEのlint・型・契約テスト・配布物ビルドと導入、FEの型・単体テスト・静的生成、OpenAPIと型の再生成差分、実HTTPのE2Eを実行する。個別には `pnpm check:be`、`pnpm check:fe`、`pnpm api:generate`、`pnpm api:check`、`pnpm test:e2e` を使う。生成物を変更した場合はコミットしてから差分チェックを実行する。
+
+GitHub ActionsはmainへのpushとPRで同じ `pnpm check` を実行する。通常CIはDB・AWS・認証情報を使わない。CDK synthやAWSデプロイは対象外。[CI採用ADR](docs/adr/0005-github-actions-ci.md) と [型生成ADR](docs/adr/0007-openapi-client.md) を参照する。
+
+ローカルの検証ログは `.logs/`、E2Eのスクリーンショットと失敗時traceは `frontend/test-results/` に出力する。実機のキーボード・縦横表示・スクリーンリーダーは未確認。
 
 RAGは検索のRecall@k、引用の整合性、根拠への忠実性、回答不能の正しさを固定評価で確認する。認可拒否、入力上限、重複・再試行、削除競合、履歴再開も検証する。評価値・応答時間・費用は測定条件とともに記録し、設計上の目標や見積もりを実績として扱わない。
 
