@@ -1,0 +1,42 @@
+# OS
+.DS_Store
+
+# Local environment settings and credentials
+.env
+.env.*
+!.env.example
+.aws/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Node / Nuxt
+node_modules/
+.nuxt/
+.output/
+.pnpm-store/
+
+# Build / CDK output
+dist/
+build/
+cdk.out/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Evaluation results
+/backend/evaluations/results/
+
+# Logs
+*.log
