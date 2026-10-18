@@ -1,6 +1,6 @@
 # リポジトリ構成
 
-決定日：2026年10月18日。状態：全体の配置方針は採用済み、実装前。backendの詳細構造は未確定。
+決定日：2026年10月18日。状態：全体の配置方針は採用済み。backend・frontendの疎通構成とCI workflowを実装済み。infraと業務機能は未実装。backendの業務処理の詳細構造は未確定。
 
 本書をディレクトリ配置方針の正本とする。FastAPI / Python、Nuxt 4 SPA、AWS CDK / TypeScriptのモノレポとして、ルート直下に `backend/`、`frontend/`、`infra/`、`docs/` を置く。
 

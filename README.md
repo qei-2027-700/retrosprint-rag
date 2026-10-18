@@ -157,7 +157,9 @@ pnpm check > .logs/check.log 2>&1
 
 GitHub ActionsはmainへのpushとPRで同じ `pnpm check` を実行する。通常CIはDB・AWS・認証情報を使わない。CDK synthやAWSデプロイは対象外。[CI採用ADR](docs/adr/0005-github-actions-ci.md) と [型生成ADR](docs/adr/0007-openapi-client.md) を参照する。
 
-ローカルの検証ログは `.logs/`、E2Eのスクリーンショットと失敗時traceは `frontend/test-results/` に出力する。実機のキーボード・縦横表示・スクリーンリーダーは未確認。
+2026年10月18日、Node 24.22.0・Python 3.13.5のローカル環境で、新しいcheckoutに対するlockfileからの依存導入と `pnpm check` が成功した。BEの契約テスト14件、FEの単体テスト1件、静的生成物から実APIに接続するE2E 8件を含む。型不一致、API契約変更後の型エラー・生成差分、未追跡の生成ファイル、APIテスト失敗も意図的な変更で検出を確認し、検証用の変更は復元した。
+
+この検証のログは `.logs/check-be.log`、`.logs/check-fe.log`、`.logs/api-check.log`、`.logs/fresh-check.log`、`.logs/negative-checks.log` に保存した。E2Eのスクリーンショットと失敗時traceの出力先は `frontend/test-results/`。CIではログとE2E出力を `validation-results` artifactに7日間保存する。ログと画面画像はGit管理しない。GitHub Actions上の実行、実機のキーボード・縦横表示・スクリーンリーダーは未確認。
 
 RAGは検索のRecall@k、引用の整合性、根拠への忠実性、回答不能の正しさを固定評価で確認する。認可拒否、入力上限、重複・再試行、削除競合、履歴再開も検証する。評価値・応答時間・費用は測定条件とともに記録し、設計上の目標や見積もりを実績として扱わない。
 
