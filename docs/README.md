@@ -6,7 +6,7 @@
 | --- | --- |
 | `specs/` | 機能の期待動作・権限・受入条件。仕様化する際に追加 |
 | [architecture/](architecture/repository-layout.md) | 共通設計とリポジトリ配置 |
-| `adr/` | 重要な判断の選択肢・採用理由・変更履歴。判断を記録する際に追加 |
+| [adr/](adr/README.md) | 重要な判断の選択肢・採用理由・変更履歴 |
 | `planning/` | 2026年10月12日の初期検討記録 |
 
 ## 初期検討記録
@@ -18,3 +18,17 @@
 - [レビュー記録](planning/rag-portfolio-review.md)
 
 既存の認可・削除・非同期・費用制御・ETL連携の検討条件は維持する。履歴を移したことだけで実装要件が不要になったり、実装・検証が完了したりすることはない。
+
+## AI開発の共通設定
+
+[開発ルール](rules/development.md) をCodexとClaude Codeで共有する。`AGENTS.md` はこの文書を読む指示を持ち、`CLAUDE.md` は同じ文書をimportする。[共通skill](skills/README.md) はツールごとの探索先からシンボリックリンクで参照する。
+
+## 仕様・API・DBの設計順序
+
+アプリのDBは [PostgreSQL](adr/0006-postgresql.md) を採用する。配置先・ORM・テーブル構造は未決定。
+
+1. `specs/` で機能ごとの利用者・権限・正常動作・状態・エラー・削除範囲・受入条件を決める。
+2. `architecture/api.md` でAPIの操作・認可・エラー・非同期処理の共通方針を整理する。実装後のHTTP形式はFastAPIから生成するOpenAPIを参照する。
+3. `architecture/data-model.md` でPostgreSQLのテーブル・関連・制約・所有者・削除・トランザクションを設計する。
+
+API方針とデータモデルの文書は設計時に追加する。実装は小さな機能単位で進め、仕様・API・DB間で必要な見直しを行う。

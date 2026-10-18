@@ -8,7 +8,7 @@
 
 2026年10月18日時点では設計・計画段階。このフォルダには設計資料があり、アプリケーションコード、依存定義、起動・デプロイ用スクリプトはまだない。アプリのテスト、CDK synth、AWS上の動作検証も未実施。
 
-本READMEは、[go-drive-etl Issue #139](https://github.com/qei-2027-700/go-drive-etl/issues/139) の最新方針と既存の3文書をまとめた入口となる。既存文書に残る仮称 `rag-portfolio`、バックエンド選定、期限については、本READMEとIssue #139に記載した更新後の方針を参照する。ディレクトリ構成は、その後の検討を反映した [配置方針](docs/architecture/repository-layout.md) に従う。LambdaやDynamoDBなどの具体基盤は引き続き検討対象とする。
+本READMEは、[開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) の最新方針と既存の3文書をまとめた入口となる。既存文書に残る仮称 `rag-portfolio`、バックエンド選定、期限については、本READMEとIssue #1に記載した更新後の方針を参照する。ディレクトリ構成は、その後の検討を反映した [配置方針](docs/architecture/repository-layout.md) に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
 
 ## 目指す使い方
 
@@ -25,15 +25,16 @@
 | --- | --- |
 | フロントエンド | Nuxt 4、TypeScript、Tailwind CSS系 |
 | バックエンド | Python、FastAPI |
+| アプリのDB | PostgreSQL。配置先・ORM・テーブル設計は未決定 |
 | インフラ | AWS先行、AWS CDK / TypeScript |
 | 回答生成・embedding | Amazon Bedrock |
 | ベクトル保存・類似検索 | Amazon S3 Vectors |
 | 認証 | Amazon Cognito |
 | ETL成果物 | BigQueryの `etl_gold.reflection_documents` を利用する計画 |
 
-バックエンドはAPI・workerを入口とし、usecase / domain / portsと外部adapterの責務を分ける。業務層にAWS SDK、認証claim、BigQueryクライアントの具体型を持ち込まない。
+バックエンドはrepositoryのinterfaceと具体実装を分離する。内部の詳細構造は未確定とする。業務層にAWS SDK、認証claim、BigQueryクライアントの具体型を持ち込まない。
 
-Lambda、DynamoDB、SQS、CloudFrontによる静的配信、非同期ジョブとポーリングは既存設計の構成案。リージョン、生成・embeddingモデル、次元数、予算・利用枠、公開方法の詳細と合わせて、検証後にADRへ判断を残す。
+アプリのDBは [PostgreSQLを採用する](docs/adr/0006-postgresql.md)。旧設計のDynamoDB固有の保存・配送方式は見直す。Lambda、SQS、CloudFrontによる静的配信、非同期ジョブとポーリングは既存設計の構成案。リージョン、生成・embeddingモデル、次元数、予算・利用枠、公開方法の詳細と合わせて、検証後にADRへ判断を残す。
 
 LangChainはBedrock接続と文書分割に限定して使う案がある。LangGraphは分岐・反復などが必要になった段階、LangSmithは評価段階での任意採用とし、初期の必須条件には含めない。
 
@@ -51,7 +52,7 @@ go-drive-etl（取得・加工・ロード）
           Cognito    │    ├─ S3：原文・抽出本文の保存案
                      │    ├─ Bedrock：embedding・回答生成
                      │    └─ S3 Vectors：ベクトル保存・類似検索
-                     └─ 文書状態・会話履歴・ジョブの保存先（未確定）
+                     └─ PostgreSQL：文書状態・会話履歴・ジョブ等（テーブル設計は未確定）
 ```
 
 ### ETLとの連携
@@ -68,7 +69,7 @@ go-drive-etl（取得・加工・ロード）
 
 年月指定には `reflection_month = @month` を使い、取り込み日や推測した開始・終了日で代用しない。月全体の要約には対象文書全体を取得する処理が必要で、top-k検索だけで網羅したとは扱わない。入力上限などで全文を扱えなければ、省略を明示する。
 
-Issue #139の2026年10月16日の記録では、ETL側のGold View作成と専用サービスアカウントによる月検索確認は完了している。AWSアプリ実行基盤からの認証・接続は未検証。正確な対象期間の重複検索は [go-drive-etl Issue #133](https://github.com/qei-2027-700/go-drive-etl/issues/133) で扱う。
+Issue #1の2026年10月16日の記録では、ETL側のGold View作成と専用サービスアカウントによる月検索確認は完了している。AWSアプリ実行基盤からの認証・接続は未検証。正確な対象期間の重複検索は [go-drive-etl Issue #133](https://github.com/qei-2027-700/go-drive-etl/issues/133) で扱う。
 
 ## 最終的な必須機能
 
@@ -135,7 +136,7 @@ retrosprint-rag/
 
 現時点で実行可能な起動コマンドはない。実装に合わせて、必要なツールの版、環境変数、ローカル起動、テスト、デプロイ・削除手順を追加する。
 
-検証では、frontendの型・テスト・ビルド、backendのlint・型・テスト、OpenAPI契約、CDK synthをCIへ組み込む。通常CIと課金対象の実環境評価は分ける。
+CIにはGitHub Actionsを採用する。frontendの型・テスト・ビルド、backendのlint・型・テスト、OpenAPI契約、CDK synthを、実行コマンドの整備に合わせて組み込む。通常CIと課金対象の実環境評価は分ける。workflowは未実装で、AWSデプロイの実行条件は未確定。[採用ADR](docs/adr/0005-github-actions-ci.md) を参照する。
 
 RAGは検索のRecall@k、引用の整合性、根拠への忠実性、回答不能の正しさを固定評価で確認する。認可拒否、入力上限、重複・再試行、削除競合、履歴再開も検証する。評価値・応答時間・費用は測定条件とともに記録し、設計上の目標や見積もりを実績として扱わない。
 
@@ -146,6 +147,6 @@ RAGは検索のRecall@k、引用の整合性、根拠への忠実性、回答不
 | [実行計画](docs/planning/rag-portfolio-plan.md) | 2026年10月12日の採用候補、実装順序、評価・運用の計画 |
 | [詳細設計](docs/planning/rag-portfolio-design.md) | API、保存方式、状態遷移、認証・認可、削除、障害回復、公開前の検証条件 |
 | [レビュー記録](docs/planning/rag-portfolio-review.md) | 設計への指摘、反映内容、実装時に残る判断・検証 |
-| [go-drive-etl Issue #139](https://github.com/qei-2027-700/go-drive-etl/issues/139) | 正式名・採用技術・ETL連携・中間デモに関する更新後の方針とETL側の追跡 |
+| [開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) | 正式名・採用技術・ETL連携・中間デモに関する更新後の方針とETL側の追跡 |
 
 3文書は設計時点の記録として参照する。設計への反映と実装検証の完了を区別し、実装時の重要な判断・変更・検証結果はADRへ残す。

@@ -70,20 +70,23 @@ retrosprint-rag/
 │   ├── architecture/
 │   │   └── repository-layout.md
 │   ├── adr/
+│   ├── rules/                    # Codex・Claude Code共通の規則
+│   ├── skills/                   # 共通skillの実体
 │   └── planning/                 # 既存3文書を過去の検討記録として保持
 ├── .github/workflows/
 ├── .gitignore
 ├── .env.example
-├── AGENTS.md
+├── AGENTS.md                    # 共通ルールを読む入口
+├── CLAUDE.md                    # 同じ共通ルールをimport
 ├── README.md
 ├── package.json
 ├── pnpm-workspace.yaml
 └── pnpm-lock.yaml
 ```
 
-`docs/planning/` は既存資料を保持するための例外。新しい仕様・設計は `specs/`、`architecture/`、`adr/` に記載する。旧資料は現行の配置方針の正本にはしない。
+`docs/planning/` は既存資料を保持するための例外。新しい仕様・設計は `specs/`、`architecture/`、`adr/` に記載する。AI開発の共通ルールは `rules/`、共通skillの実体は `skills/` に置く。旧資料は現行の配置方針の正本にはしない。
 
-DB、実行基盤、キュー配送、ETL接続の具体adapterは、選定した方式に合わせて追加する。この構成によってLambdaやDynamoDB、BigQuery直接接続が採用済みになるわけではない。
+アプリのDBは [PostgreSQLを採用する](../adr/0006-postgresql.md)。配置先・ORM・テーブル構造、APIの実行基盤、キュー配送、ETL接続方式は未決定。具体adapterは選定した方式に合わせて追加する。
 
 ## バックエンドの分離方針
 
@@ -158,3 +161,7 @@ specsは利用者ができることで分類する。ログイン・ログアウ
 5. 実装した部分、fakeによる検証、実AWSで確認した範囲を区別する。配置方針の採用を機能完成とは扱わない。
 
 本書は [z-private-kanri Issue #13](https://github.com/qei-2027-700/z-private-kanri/issues/13) の配置・文書管理方針と、本リポジトリでの検討を反映している。元Issueの私的な記録は転載しない。
+
+## CodexとClaude Codeの共通設定
+
+共通ルールは [開発ルール](../rules/development.md) にまとめ、ルートの `AGENTS.md` と `CLAUDE.md` から参照する。skillは `docs/skills/` に置き、`.agents/skills → ../docs/skills`、`.claude/skills → ../docs/skills` の相対シンボリックリンクで共有する。配置と確認方法は [共通skill](../skills/README.md) を参照する。
