@@ -21,7 +21,7 @@
 
 ## AI開発の共通設定
 
-[開発ルール](rules/development.md) をCodexとClaude Codeで共有する。`AGENTS.md` はこの文書を読む指示を持ち、`CLAUDE.md` は同じ文書をimportする。[共通skill](skills/README.md) はツールごとの探索先からシンボリックリンクで参照する。
+[開発ルール](rules/development.md) をCodexとClaude Codeで共有する。`AGENTS.md` はこの文書を読む指示を持ち、`CLAUDE.md` は同じ文書をimportする。リポジトリ固有のskillはまだなく、共有用ディレクトリと探索用リンクは追加時に作る。
 
 ## 仕様・API・DBの設計順序
 

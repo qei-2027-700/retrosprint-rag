@@ -113,24 +113,30 @@ Issue #1の2026年10月16日の記録では、ETL側のGold View作成と専用�
 
 ## ディレクトリ構成
 
-ルート直下に `backend/`、`frontend/`、`infra/`、`docs/` を置く。API型とHTTPクライアントはfrontend内、品質評価はbackend内で管理する。
+現在の主要な配置を示す。API型とHTTPクライアントはfrontend内で管理する。
 
 ```text
 retrosprint-rag/
 ├── backend/
-│   ├── src/retrosprint_rag/   # 内部の詳細構造は未確定
+│   ├── src/retrosprint_rag/
+│   ├── scripts/
 │   ├── tests/
-│   └── evaluations/          # 合成資料・検索や回答の評価・実験結果
+│   ├── pyproject.toml
+│   └── uv.lock
 ├── frontend/
-│   ├── app/api/              # 生成型とHTTPクライアント
-│   └── openapi/              # FastAPIから出力するOpenAPI
-├── infra/                # AWS CDK / TypeScript
-└── docs/                     # 仕様・共通設計・ADR・既存の検討記録
+│   ├── app/api/              # HTTPクライアントと生成型
+│   ├── openapi/openapi.json  # FastAPIから生成
+│   ├── tests/
+│   ├── package.json
+│   └── pnpm-lock.yaml
+├── docs/                    # 仕様・共通設計・ADR・過去の検討記録
+├── scripts/                 # 生成差分の確認
+├── .github/workflows/
+├── mise.toml                # ツールのバージョン・共通タスク
+└── mise.lock                # ツール配布物の固定
 ```
 
-配置方針の正本は [リポジトリ構成](docs/architecture/repository-layout.md)。バックエンドはrepositoryのinterfaceと具体実装を分離する方針とする。内部のディレクトリ名・ファイル名・分割単位は未確定で、実装時に決める。
-
-この方針で従来の `apps/`・`packages/api-client/`・ルートの `evals/` 案を置き換える。図は実装時の配置を示すもので、実装済みの一覧ではない。
+詳細は [リポジトリ構成](docs/architecture/repository-layout.md) を参照する。infraと品質評価は未実装。導入時にはそれぞれinfraとbackend内に配置し、必要なファイルだけを追加する。バックエンドの業務処理はrepositoryのinterfaceと具体実装を分離する方針だが、内部の詳細構造は実装時に決める。
 
 ## 起動・検証
 

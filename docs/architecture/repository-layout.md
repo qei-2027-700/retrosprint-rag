@@ -1,8 +1,8 @@
 # リポジトリ構成
 
-決定日：2026年10月18日。状態：全体の配置方針は採用済み。backend・frontendの疎通構成とCI workflowを実装済み。infraと業務機能は未実装。backendの業務処理の詳細構造は未確定。
+更新日：2026年10月19日。backend・frontendの疎通構成とCIを実装済み。業務機能、DB・AWS接続、infraは未実装。
 
-本書をディレクトリ配置方針の正本とする。FastAPI / Python、Nuxt 4 SPA、AWS CDK / TypeScriptのモノレポとして、ルート直下に `backend/`、`frontend/`、`infra/`、`docs/` を置く。
+本書を現在の配置と今後の配置方針の参照先とする。構成図は現在の管理対象を示す。未実装の配置は後述し、必要な実装が生じたときに追加する。
 
 ## 採用理由
 
@@ -10,81 +10,71 @@
 
 従来の `apps/`、`packages/api-client/`、ルートの `evals/`・`configs/rag/` の配置案は本書で置き換える。複数のアプリで共有する必要が生じた場合は、共有パッケージへの切り出しを改めて判断する。
 
-## 全体構成
+## 現在の構成
 
-以下は配置先を示す設計図。すべての空ディレクトリを先に作ることはせず、実装に必要なものから追加する。各層の内部は少数のファイルから始め、ディレクトリを増やすのは、同じ責務のファイルが増えて見通しが悪くなった時点とする。
+主要な管理対象を示す。依存のインストール先・キャッシュ・ビルド出力は省略する。
 
 ```text
 retrosprint-rag/
 ├── backend/
+│   ├── .env.example
+│   ├── README.md
 │   ├── pyproject.toml
 │   ├── uv.lock
 │   ├── src/retrosprint_rag/
-│   │   ├── …                     # 内部のファイル・ディレクトリ構成は未確定
-│   │   └── resources/
-│   │       ├── prompts/
-│   │       └── rag/
-│   ├── scripts/export_openapi.py
-│   ├── tests/
-│   │   ├── unit/
-│   │   ├── contract/
-│   │   └── integration/
-│   └── evaluations/
-│       ├── README.md
-│       ├── run_retrieval.py
-│       ├── metrics.py
-│       ├── configs/
-│       ├── datasets/reflection_v1/
-│       │   ├── README.md
-│       │   ├── corpus/
-│       │   ├── manifest.json
-│       │   ├── development.jsonl
-│       │   └── test.jsonl
-│       └── results/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   ├── scripts/
+│   │   ├── export_openapi.py
+│   │   └── check_wheel.py
+│   └── tests/test_contract.py
 ├── frontend/
+│   ├── .env.example
+│   ├── README.md
 │   ├── app/
+│   │   ├── app.vue
 │   │   ├── api/
-│   │   │   ├── generated/schema.d.ts
-│   │   │   └── client.ts
-│   │   ├── pages/
+│   │   │   ├── client.ts
+│   │   │   └── generated/schema.d.ts
+│   │   ├── assets/css/main.css
 │   │   ├── components/
 │   │   ├── composables/
-│   │   ├── middleware/
-│   │   └── layouts/
+│   │   ├── layouts/
+│   │   └── pages/
 │   ├── openapi/openapi.json
-│   ├── public/
 │   ├── tests/
+│   │   ├── connectivity.test.ts
+│   │   ├── contract.typecheck.ts
+│   │   ├── tsconfig.json
+│   │   └── e2e/connectivity.spec.ts
 │   ├── nuxt.config.ts
+│   ├── tsconfig.json
+│   ├── vitest.config.ts
+│   ├── playwright.config.ts
 │   ├── package.json
 │   └── pnpm-lock.yaml
-├── infra/aws/
-│   ├── bin/
-│   ├── lib/
-│   │   ├── stacks/
-│   │   └── constructs/
-│   ├── test/
-│   ├── cdk.json
-│   └── package.json
 ├── docs/
 │   ├── README.md
 │   ├── specs/
 │   ├── architecture/
-│   │   └── repository-layout.md
 │   ├── adr/
-│   ├── rules/                    # Codex・Claude Code共通の規則
-│   ├── skills/                   # 共通skillの実体
-│   └── planning/                 # 既存3文書を過去の検討記録として保持
-├── .github/workflows/
+│   ├── rules/
+│   └── planning/
+├── scripts/check-generated.mjs
+├── .github/workflows/ci.yml
 ├── .gitignore
-├── .env.example
-├── AGENTS.md                    # 共通ルールを読む入口
-├── CLAUDE.md                    # 同じ共通ルールをimport
+├── AGENTS.md
+├── CLAUDE.md
 ├── README.md
-├── mise.toml                 # ツールのバージョン・共通タスク
-└── mise.lock                 # ツール配布物のURL・チェックサム
+├── mise.toml
+└── mise.lock
 ```
 
-`docs/planning/` は既存資料を保持するための例外。新しい仕様・設計は `specs/`、`architecture/`、`adr/` に記載する。AI開発の共通ルールは `rules/`、共通skillの実体は `skills/` に置く。旧資料は現行の配置方針の正本にはしない。
+`mise.toml` はツールのバージョンと共通タスク、`mise.lock` はツール配布物を固定する。pnpmの依存定義・lockfile・install許可設定はFE内、uvの依存定義・lockfileはBE内で管理する。現在はpnpm workspaceを使わず、ルートの `package.json` やpnpmの設定・lockfileは不要。
+
+`infra/`、評価コード、RAG設定・prompt、FEのmiddlewareは未実装で、構成図には含めない。AWS CDKはinfra、検索・回答品質の評価はbackendに置く方針とし、詳細なファイル分割は導入時に決める。
+
+`docs/planning/` は過去の検討記録を保持する。現行の仕様・設計は `specs/`、`architecture/`、`adr/`、AI開発の共通ルールは `rules/` に記載する。旧資料の構成図を現在の配置として扱わない。
 
 アプリのDBは [PostgreSQLを採用する](../adr/0006-postgresql.md)。配置先・ORM・テーブル構造、APIの実行基盤、キュー配送、ETL接続方式は未決定。具体adapterは選定した方式に合わせて追加する。
 
@@ -98,13 +88,13 @@ backendの詳細構造は未確定とする。現時点で決めるのは、repo
 
 ### Pythonパッケージ
 
-`src/retrosprint_rag/` を一つの名前空間とし、API・worker・評価から `retrosprint_rag` をimportする。通常パッケージとして必要な `__init__.py` を配置する。
+`src/retrosprint_rag/` を一つの名前空間とする。現在はAPIが使い、将来のworker・評価でも `retrosprint_rag` をimportする。通常パッケージとして必要な `__init__.py` を配置する。
 
-`pyproject.toml` でbuild backendとsrcレイアウトのパッケージ検出を設定する。backendをインストールした環境で実行し、`sys.path` の手動変更や実行ディレクトリへの依存を避ける。promptsと標準RAG設定は配布物に同梱し、`importlib.resources` 等で参照する。
+`pyproject.toml` でbuild backendとsrcレイアウトのパッケージ検出を設定する。backendをインストールした環境で実行し、`sys.path` の手動変更や実行ディレクトリへの依存を避ける。promptと標準RAG設定を導入するときは配布物に同梱し、`importlib.resources` 等で参照する。
 
 ## フロントエンドとAPI契約
 
-初期は `ssr: false` のNuxt SPAとする。画面上の認証誘導・表示制御に加えて、API側でも認証・認可を行う。
+初期は `ssr: false` のNuxt SPAとする。認証・認可は未実装。導入時には画面上の表示制御に加えてAPI側でも検証する。
 
 ```text
 FastAPIのAPI定義・Pydantic schemas
@@ -115,23 +105,17 @@ FastAPIのAPI定義・Pydantic schemas
 
 OpenAPIとTypeScript型は生成物としてGit管理し、手編集しない。CIで再生成差分を確認する。API定義の出力はAWS接続・実際の認証情報なしで実行できるようにする。
 
-`client.ts` は接続先、認証情報の付与、共通エラー処理を実装する。内部DTOやDB型は直接公開しない。型生成・HTTPクライアントのツールと版は導入時に固定する。SSEを追加する場合は、イベントの型と受信時の検証を別途設計する。
+現在の `client.ts` は接続先と生成型を使うHTTPクライアントを定義し、疎通の状態・エラーはcomposableで扱う。認証情報の付与は認証の導入時に追加する。内部DTOやDB型は直接公開しない。型生成・HTTPクライアントの版はFEの依存定義とlockfileで固定する。SSEを追加する場合は、イベントの型と受信時の検証を別途設計する。
 
-## 標準設定と品質評価
+## 今後の標準設定と品質評価
 
-標準の分割・検索設定は `backend/src/retrosprint_rag/resources/rag/`、prompt本文は `resources/prompts/` を正本とする。評価の `configs/` は標準設定を参照し、実験で変える項目だけを指定する。
+以下は未実装の方針。具体的な配置・ファイル分割は実装時に確定し、空の雛形は先に作らない。
 
-| 配置 | 内容 |
-| --- | --- |
-| `backend/tests/` | 仕様、認可、状態遷移、エラー処理、契約、評価指標の計算などの検証 |
-| `backend/evaluations/` | 検索順位・回答品質・遅延・費用の測定コードと実行方法 |
-| `evaluations/datasets/` | 合成文書、文書ID・版の対応、質問、正解根拠 |
-| `evaluations/configs/` | baselineなどの実験条件 |
-| `evaluations/results/` | 生の結果、解決後の全設定、比較・失敗例。原則Git対象外 |
+標準の分割・検索設定とprompt本文はbackendのパッケージに同梱する。評価コード・合成資料・実験条件もbackend内で管理し、標準設定を参照して実験で変える項目だけを指定する。測定の生結果は原則Git対象外とする。
 
 評価はアプリ本体の検索usecaseを呼び、検索ロジックを複製しない。調整用の `development.jsonl` と固定の `test.jsonl` を分ける。正解根拠は文書ID・版・根拠箇所で保持し、分割設定を変えて比較できるようにする。
 
-結果にはコード・dataset・promptの版、モデル・次元、解決後の全設定、指標と測定条件を記録する。共有する小さな比較報告が必要になったら `evaluations/reports/` を追加し、条件・指標・失敗例をGit管理する。私的記録、アップロード実資料、embeddingベクトル、認証情報はGitへ追加しない。評価の資料・indexは運用中のものと分ける。
+結果にはコード・dataset・promptの版、モデル・次元、解決後の全設定、指標と測定条件を記録する。共有する小さな比較報告が必要になったら、条件・指標・失敗例をGit管理する。私的記録、アップロード実資料、embeddingベクトル、認証情報はGitへ追加しない。評価の資料・indexは運用中のものと分ける。
 
 ## 文書の正本
 
@@ -150,9 +134,9 @@ specsは利用者ができることで分類する。ログイン・ログアウ
 
 必要な機能だけ技術詳細の `design.md` を追加する。共通の契約はarchitectureを参照し、APIフィールド一覧や設定値を重複して手書きしない。ADRは重要な判断ごとに記録し、変更時は旧判断への参照と現行仕様の更新を行う。
 
-起動・型生成手順は各アプリやinfraのREADME、評価手順は `backend/evaluations/README.md` に必要に応じて置く。独立した運用文書群や仕様の空ファイルは初期作成の要件にしない。
+現在の起動・型生成手順は各アプリのREADMEに置く。infraや評価の手順書は、それぞれの実装時に追加する。独立した運用文書群や仕様の空ファイルは初期作成の要件にしない。
 
-## 導入時の確認
+## 業務機能・評価を導入するときの確認
 
 1. backendをインストールし、API・worker・評価から同じ名前でimportできることを確認する。配布物にはpromptと標準RAG設定を含める。
 2. repositoryの利用側がinterface経由で呼び出すことと、認可・状態の確認が必要な処理に適用されることを確認する。
@@ -164,4 +148,4 @@ specsは利用者ができることで分類する。ログイン・ログアウ
 
 ## CodexとClaude Codeの共通設定
 
-共通ルールは [開発ルール](../rules/development.md) にまとめ、ルートの `AGENTS.md` と `CLAUDE.md` から参照する。skillは `docs/skills/` に置き、`.agents/skills → ../docs/skills`、`.claude/skills → ../docs/skills` の相対シンボリックリンクで共有する。配置と確認方法は [共通skill](../skills/README.md) を参照する。
+共通ルールは [開発ルール](../rules/development.md) にまとめ、ルートの `AGENTS.md` と `CLAUDE.md` から参照する。現在はリポジトリ固有のskillを持たない。共有skill用のディレクトリと探索用リンクは、実際にskillを追加するときに作る。個人環境の `evid-verify`・`gh-attach` はリポジトリにコピーしない。
