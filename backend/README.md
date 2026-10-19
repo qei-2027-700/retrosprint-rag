@@ -2,6 +2,8 @@
 
 Python 3.13.5、uv 0.8.15を使う。FastAPI、Pydantic、uvicornなどの解決済みバージョンは `uv.lock` に固定している。DB・AWS・認証情報は起動、テスト、型生成に不要。
 
+ビルドにはuv 0.8.15同梱の `uv_build` を使い、`pyproject.toml` でも同じ版を完全固定する。`check:be` のビルドは `--offline --no-cache` で実行し、外部のビルド依存や既存キャッシュを必要としないことを確認する。uvを更新するときはbuild backendの版も同時に更新する。理由と検証範囲は [ADR-0010](../docs/adr/0010-bundled-python-build.md) を参照する。
+
 ## 起動
 
 ツールのバージョンはルートの `mise.toml` と `mise.lock` で管理する。miseを導入し、リポジトリのルートで実行する。

@@ -46,7 +46,7 @@ run = [
   "uv run ruff format --check .",
   "uv run mypy src scripts tests",
   "uv run pytest",
-  "uv build",
+  "uv build --offline --no-cache",
   "uv run python scripts/check_wheel.py",
 ]
 
