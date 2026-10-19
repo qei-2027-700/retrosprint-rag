@@ -21,7 +21,7 @@ CodexとClaude Codeで同じルールを使う。共通ルールはこの文書�
 
 ## 検証とデータ
 
-ツールのバージョンと共通タスクはルートの `mise.toml`、配布物の固定は `mise.lock` で管理する。共通の検証入口は `mise run check`。pnpmはFEの依存と固有コマンド、uvはBEの依存を管理する。workspaceの構成は `pnpm-workspace.yaml` で管理し、共通タスク用のルート `package.json` は作らない。
+ツールのバージョンと共通タスクはルートの `mise.toml`、配布物の固定は `mise.lock` で管理する。共通の検証入口は `mise run check`。pnpmはFEの依存と固有コマンド、uvはBEの依存を管理する。現在はFE単体のためpnpm workspaceを使わず、pnpmの依存定義・lockfile・install許可設定は `frontend/` 内へまとめる。共通タスク用のルート `package.json` は作らない。
 
 変更に応じたテスト・型チェック・build等を行い、結果と未解決事項を報告する。実行コマンドは各プロジェクトの定義に従い、まだ存在しないコマンドを実行済みとして記録しない。API変更時はOpenAPI・型生成、検索変更時は評価への影響を確認する。
 

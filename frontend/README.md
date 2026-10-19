@@ -1,6 +1,8 @@
 # Frontend
 
-Nuxt 4.6.2、Vue 3、TypeScript、Tailwind CSS 4のSPA。Node 24.22.0とpnpm 10.34.7を使い、依存はルートの `pnpm-lock.yaml` に固定する。
+Nuxt 4.6.2、Vue 3、TypeScript、Tailwind CSS 4のSPA。Node 24.22.0とpnpm 10.34.7を使い、依存はこのディレクトリの `pnpm-lock.yaml` に固定する。pnpm workspaceは使わず、FE単体で依存を管理する。
+
+依存のinstallスクリプトは `package.json` の `pnpm.onlyBuiltDependencies` でesbuildだけ許可する。これは現在固定しているpnpm 10の設定形式。
 
 ## Nuxt 5への移行方針
 

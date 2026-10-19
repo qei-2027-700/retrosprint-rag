@@ -55,7 +55,8 @@ retrosprint-rag/
 │   ├── public/
 │   ├── tests/
 │   ├── nuxt.config.ts
-│   └── package.json
+│   ├── package.json
+│   └── pnpm-lock.yaml
 ├── infra/aws/
 │   ├── bin/
 │   ├── lib/
@@ -80,9 +81,7 @@ retrosprint-rag/
 ├── CLAUDE.md                    # 同じ共通ルールをimport
 ├── README.md
 ├── mise.toml                 # ツールのバージョン・共通タスク
-├── mise.lock                 # ツール配布物のURL・チェックサム
-├── pnpm-workspace.yaml
-└── pnpm-lock.yaml
+└── mise.lock                 # ツール配布物のURL・チェックサム
 ```
 
 `docs/planning/` は既存資料を保持するための例外。新しい仕様・設計は `specs/`、`architecture/`、`adr/` に記載する。AI開発の共通ルールは `rules/`、共通skillの実体は `skills/` に置く。旧資料は現行の配置方針の正本にはしない。

@@ -14,7 +14,7 @@ Node・Python・pnpm・uvのバージョン指定が、`.nvmrc`、`.python-versi
 
 ルートの `mise.toml` をツールのバージョンと共通タスクの定義元とする。Node 24.22.0、Python 3.13.5、pnpm 10.34.7、uv 0.8.15は変更しない。CIではローカルの検証に使ったmise 2026.3.7を固定する。
 
-`.nvmrc`、`backend/.python-version`、ルートの `package.json` を取り除く。workspaceは `pnpm-workspace.yaml` で定義でき、ルートの空のpackage manifestは不要なため残さない。Nuxt固有のコマンドは `frontend/package.json`、Pythonの依存と対応バージョンの範囲は `backend/pyproject.toml` で引き続き管理する。
+`.nvmrc`、`backend/.python-version`、ルートの `package.json` を取り除く。現在のJavaScriptアプリはFEだけなのでpnpm workspaceも取り除く。Nuxt固有のコマンドと依存は `frontend/package.json`、解決結果は `frontend/pnpm-lock.yaml` にまとめる。Pythonの依存と対応バージョンの範囲は `backend/pyproject.toml` で引き続き管理する。
 
 ツールのURLとチェックサムは `mise.lock` に固定する。対応を検証するプラットフォームはmacOS arm64とCIのLinux x64とし、導入には `mise install --locked` を使う。ツール更新時は `mise.toml` を変更し、`mise lock --platform linux-x64,macos-arm64` でlockfileも更新する。生成されたlockfileは手編集しない。
 
@@ -24,7 +24,7 @@ Node・Python・pnpm・uvのバージョン指定が、`.nvmrc`、`.python-versi
 
 ## CIと検証
 
-依存のinstallスクリプトの許可は、実際にpostinstallを使うesbuildだけにする。現在の `@tailwindcss/oxide` はinstallスクリプトを持たないため、許可一覧から除外する。
+依存のinstallスクリプトの許可は、現在のpnpm 10が対応する `frontend/package.json` の `pnpm.onlyBuiltDependencies` で管理し、実際にpostinstallを使うesbuildだけにする。現在の `@tailwindcss/oxide` はinstallスクリプトを持たないため、許可一覧から除外する。
 
 GitHub Actionsの個別のNode・pnpm・uv setupを、コミットSHAで固定した `jdx/mise-action` へ置き換える。同じ `mise.toml` と `mise.lock` を読み、`--locked` で導入する。インストール済みツールのキャッシュは無効にする。通常CIの権限とDB・AWS不要の方針は維持する。
 

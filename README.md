@@ -136,7 +136,7 @@ retrosprint-rag/
 
 [mise](https://mise.jdx.dev/getting-started.html) を導入してから、リポジトリのルートで次の手順を実行する。CIではmise 2026.3.7を使う。シェルのactivate設定は必須ではなく、`mise run` と `mise exec -- <コマンド>` から固定したツールを利用できる。
 
-ツールのバージョンと共通コマンドはルートの `mise.toml` で管理する。Node 24.22.0、Python 3.13.5、pnpm 10.34.7、uv 0.8.15を使い、ツールの配布元とチェックサムは `mise.lock`、ライブラリ依存は `pnpm-lock.yaml` と `backend/uv.lock` に固定する。
+ツールのバージョンと共通コマンドはルートの `mise.toml` で管理する。Node 24.22.0、Python 3.13.5、pnpm 10.34.7、uv 0.8.15を使い、ツールの配布元とチェックサムは `mise.lock`、ライブラリ依存は `frontend/pnpm-lock.yaml` と `backend/uv.lock` に固定する。
 
 ```sh
 mise trust mise.toml
@@ -146,7 +146,7 @@ cp -n backend/.env.example backend/.env
 cp -n frontend/.env.example frontend/.env
 ```
 
-共通タスクとツールのバージョンはmise、workspaceの構成は `pnpm-workspace.yaml` で管理する。ルートに `package.json` は置かない。FE固有のコマンドと依存は `frontend/package.json`、BEの依存定義は `backend/pyproject.toml` で管理する。
+共通タスクとツールのバージョンはmiseで管理する。FEは `frontend/package.json` と `frontend/pnpm-lock.yaml`、BEは `backend/pyproject.toml` と `backend/uv.lock` で依存を管理する。現在はpnpm workspaceを使わず、ルートにpackage manifestやpnpmの設定・lockfileを置かない。
 
 別々のターミナルで `mise run dev:be` と `mise run dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
 

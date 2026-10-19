@@ -13,7 +13,10 @@ UV_PYTHON_PREFERENCE = "only-system"
 
 [tasks.setup]
 description = "Install backend and frontend dependencies from lockfiles"
-run = ["uv sync --directory backend --frozen", "pnpm install --frozen-lockfile"]
+run = [
+  "uv sync --directory backend --frozen",
+  "pnpm --dir frontend install --frozen-lockfile",
+]
 
 [tasks."dev:be"]
 description = "Start FastAPI on localhost:8000"
