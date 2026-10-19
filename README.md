@@ -146,7 +146,7 @@ cp -n backend/.env.example backend/.env
 cp -n frontend/.env.example frontend/.env
 ```
 
-ルートの `package.json` はpnpm workspaceの識別情報だけを持ち、共通タスク・ツールのバージョン指定は持たない。FE固有のコマンドは `frontend/package.json`、BEの依存定義は `backend/pyproject.toml` で管理する。
+共通タスクとツールのバージョンはmise、workspaceの構成は `pnpm-workspace.yaml` で管理する。ルートに `package.json` は置かない。FE固有のコマンドと依存は `frontend/package.json`、BEの依存定義は `backend/pyproject.toml` で管理する。
 
 別々のターミナルで `mise run dev:be` と `mise run dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
 

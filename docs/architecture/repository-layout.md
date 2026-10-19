@@ -81,7 +81,6 @@ retrosprint-rag/
 ├── README.md
 ├── mise.toml                 # ツールのバージョン・共通タスク
 ├── mise.lock                 # ツール配布物のURL・チェックサム
-├── package.json              # pnpm workspaceの識別情報
 ├── pnpm-workspace.yaml
 └── pnpm-lock.yaml
 ```
