@@ -18,7 +18,7 @@ Nuxt 4.6.2と現在のlockfileを維持し、`future.compatibilityVersion: 5` �
 
 ## 影響と検証
 
-互換設定を有効にした状態で、既存の `pnpm check:fe` と `pnpm test:e2e` を実行する。Nuxtの更新で互換設定の動作が変わる可能性もあるため、依存とlockfileの変更を同じ検証に通す。
+互換設定を有効にした状態で、既存の `mise run check:fe` と `mise run test:e2e` を実行する。Nuxtの更新で互換設定の動作が変わる可能性もあるため、依存とlockfileの変更を同じ検証に通す。
 
 2026年10月18日、互換設定を有効にした状態で型チェック・単体テスト1件・静的生成・実HTTPのE2E 8件が成功した。ログは `.logs/nuxt5-check-fe.log` と `.logs/nuxt5-e2e.log` に保存した。
 

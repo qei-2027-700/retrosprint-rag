@@ -1,16 +1,4 @@
 {
   "name": "retrosprint-rag",
-  "private": true,
-  "packageManager": "pnpm@10.34.7",
-  "engines": { "node": "24.22.x" },
-  "scripts": {
-    "dev:be": "cd backend && uv run uvicorn retrosprint_rag.main:create_app --factory --host localhost --port 8000",
-    "dev:fe": "pnpm --dir frontend dev",
-    "api:generate": "uv run --directory backend python scripts/export_openapi.py && pnpm --dir frontend api:generate",
-    "api:check": "pnpm api:generate && node scripts/check-generated.mjs",
-    "check:be": "cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy src scripts tests && uv run pytest && uv build && uv run python scripts/check_wheel.py",
-    "check:fe": "pnpm --dir frontend typecheck && pnpm --dir frontend test && pnpm --dir frontend generate",
-    "test:e2e": "pnpm --dir frontend test:e2e",
-    "check": "pnpm check:be && pnpm check:fe && pnpm api:check && pnpm test:e2e"
-  }
+  "private": true
 }

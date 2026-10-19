@@ -11,23 +11,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
-        with:
-          version: '0.8.15'
-          enable-cache: true
-          cache-dependency-glob: backend/uv.lock
-      - run: uv sync --directory backend --frozen
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --dir frontend exec playwright install --with-deps chromium
-      - run: mkdir -p .logs && pnpm check > .logs/check.log 2>&1
+          version: '2026.3.7'
+          install_args: --locked
+          cache: false
+      - run: mise run setup
+      - run: mise run browser:install:ci
+      - run: mkdir -p .logs && mise run check > .logs/check.log 2>&1
       - name: Show validation log
         if: always()
-        run: tail -100 .logs/check.log
+        run: if [ -f .logs/check.log ]; then tail -100 .logs/check.log; fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

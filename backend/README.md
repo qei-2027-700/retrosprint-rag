@@ -4,15 +4,17 @@ Python 3.13.5、uv 0.8.15を使う。FastAPI、Pydantic、uvicornなどの解決
 
 ## 起動
 
-リポジトリのルートで実行する。
+ツールのバージョンはルートの `mise.toml` と `mise.lock` で管理する。miseを導入し、リポジトリのルートで実行する。
 
 ```sh
-uv sync --directory backend --frozen
-cp backend/.env.example backend/.env
-pnpm dev:be
+mise trust mise.toml
+mise install --locked
+mise run setup
+cp -n backend/.env.example backend/.env
+mise run dev:be
 ```
 
-`http://localhost:8000/health` と `http://localhost:8000/docs` を利用できる。`pnpm dev:be` はbackendを作業ディレクトリとし、そこにある `.env` を読む。
+`http://localhost:8000/health` と `http://localhost:8000/docs` を利用できる。`mise run dev:be` はbackendを作業ディレクトリとし、そこにある `.env` を読む。
 
 | 変数 | 既定値・用途 |
 | --- | --- |
@@ -24,9 +26,9 @@ pnpm dev:be
 ## 検証と契約出力
 
 ```sh
-pnpm check:be
-pnpm api:generate
-pnpm api:check
+mise run check:be
+mise run api:generate
+mise run api:check
 ```
 
 `check:be` はruff lint・format、mypy、pytest、sdist/wheelのビルド、wheelの導入・HTTP起動を順に実行する。wheel検証はソースツリー外の一時環境へ配布物を導入し、healthの200とechoの404を確認して終了する。

@@ -79,7 +79,9 @@ retrosprint-rag/
 ├── AGENTS.md                    # 共通ルールを読む入口
 ├── CLAUDE.md                    # 同じ共通ルールをimport
 ├── README.md
-├── package.json
+├── mise.toml                 # ツールのバージョン・共通タスク
+├── mise.lock                 # ツール配布物のURL・チェックサム
+├── package.json              # pnpm workspaceの識別情報
 ├── pnpm-workspace.yaml
 └── pnpm-lock.yaml
 ```

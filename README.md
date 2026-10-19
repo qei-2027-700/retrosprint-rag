@@ -134,30 +134,35 @@ retrosprint-rag/
 
 ## 起動・検証
 
-Node 24.22.0（`.nvmrc`）、Python 3.13.5（`backend/.python-version`）、pnpm 10.34.7、uv 0.8.15を使う。依存は `pnpm-lock.yaml` と `backend/uv.lock` に固定する。
+[mise](https://mise.jdx.dev/getting-started.html) を導入してから、リポジトリのルートで次の手順を実行する。CIではmise 2026.3.7を使う。シェルのactivate設定は必須ではなく、`mise run` と `mise exec -- <コマンド>` から固定したツールを利用できる。
+
+ツールのバージョンと共通コマンドはルートの `mise.toml` で管理する。Node 24.22.0、Python 3.13.5、pnpm 10.34.7、uv 0.8.15を使い、ツールの配布元とチェックサムは `mise.lock`、ライブラリ依存は `pnpm-lock.yaml` と `backend/uv.lock` に固定する。
 
 ```sh
-uv sync --directory backend --frozen
-pnpm install --frozen-lockfile
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+mise trust mise.toml
+mise install --locked
+mise run setup
+cp -n backend/.env.example backend/.env
+cp -n frontend/.env.example frontend/.env
 ```
 
-別々のターミナルで `pnpm dev:be` と `pnpm dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
+ルートの `package.json` はpnpm workspaceの識別情報だけを持ち、共通タスク・ツールのバージョン指定は持たない。FE固有のコマンドは `frontend/package.json`、BEの依存定義は `backend/pyproject.toml` で管理する。
+
+別々のターミナルで `mise run dev:be` と `mise run dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
 
 検証時は開発サーバーを停止して3000・8000番ポートを空ける。
 
 ```sh
-pnpm --dir frontend exec playwright install chromium
+mise run browser:install
 mkdir -p .logs
-pnpm check > .logs/check.log 2>&1
+mise run check > .logs/check.log 2>&1
 ```
 
-`pnpm check` はBEのlint・型・契約テスト・配布物ビルドと導入、FEの型・単体テスト・静的生成、OpenAPIと型の再生成差分、実HTTPのE2Eを実行する。個別には `pnpm check:be`、`pnpm check:fe`、`pnpm api:generate`、`pnpm api:check`、`pnpm test:e2e` を使う。生成物を変更した場合はコミットしてから差分チェックを実行する。
+`mise run check` はBEのlint・型・契約テスト・配布物ビルドと導入、FEの型・単体テスト・静的生成、OpenAPIと型の再生成差分、実HTTPのE2Eを実行する。個別には `mise run check:be`、`mise run check:fe`、`mise run api:generate`、`mise run api:check`、`mise run test:e2e` を使う。生成物を変更した場合はコミットしてから差分チェックを実行する。
 
-GitHub ActionsはmainへのpushとPRで同じ `pnpm check` を実行する。通常CIはDB・AWS・認証情報を使わない。CDK synthやAWSデプロイは対象外。[CI採用ADR](docs/adr/0005-github-actions-ci.md) と [型生成ADR](docs/adr/0007-openapi-client.md) を参照する。
+GitHub ActionsはmainへのpushとPRで同じ `mise run check` を実行する。通常CIはDB・AWS・認証情報を使わない。CDK synthやAWSデプロイは対象外。[CI採用ADR](docs/adr/0005-github-actions-ci.md) と [型生成ADR](docs/adr/0007-openapi-client.md) を参照する。
 
-2026年10月18日、Node 24.22.0・Python 3.13.5のローカル環境で、新しいcheckoutに対するlockfileからの依存導入と `pnpm check` が成功した。BEの契約テスト14件、FEの単体テスト1件、静的生成物から実APIに接続するE2E 8件を含む。型不一致、API契約変更後の型エラー・生成差分、未追跡の生成ファイル、APIテスト失敗も意図的な変更で検出を確認し、検証用の変更は復元した。
+2026年10月18日、mise導入前にNode 24.22.0・Python 3.13.5のローカル環境で、新しいcheckoutに対するlockfileからの依存導入と `pnpm check` が成功した。BEの契約テスト14件、FEの単体テスト1件、静的生成物から実APIに接続するE2E 8件を含む。型不一致、API契約変更後の型エラー・生成差分、未追跡の生成ファイル、APIテスト失敗も意図的な変更で検出を確認し、検証用の変更は復元した。
 
 この検証のログは `.logs/check-be.log`、`.logs/check-fe.log`、`.logs/api-check.log`、`.logs/fresh-check.log`、`.logs/negative-checks.log` に保存した。E2Eのスクリーンショットと失敗時traceの出力先は `frontend/test-results/`。CIではログとE2E出力を `validation-results` artifactに7日間保存する。ログと画面画像はGit管理しない。2026年10月19日の確認時点で、Nuxt 5互換設定を含むコミット `de2a4e8` の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)も成功している。実機のキーボード・縦横表示・スクリーンリーダーは未確認。
 
