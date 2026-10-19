@@ -154,6 +154,8 @@ cp -n frontend/.env.example frontend/.env
 
 共通タスクとツールのバージョンはmiseで管理する。FEは `frontend/package.json` と `frontend/pnpm-lock.yaml`、BEは `backend/pyproject.toml` と `backend/uv.lock` で依存を管理する。現在はpnpm workspaceを使わず、ルートにpackage manifestやpnpmの設定・lockfileを置かない。
 
+`mise run dev:be` は起動時とBEのPythonコード変更後にOpenAPIとFEの型を自動更新する。
+
 別々のターミナルで `mise run dev:be` と `mise run dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
 
 検証時は開発サーバーを停止して3000・8000番ポートを空ける。

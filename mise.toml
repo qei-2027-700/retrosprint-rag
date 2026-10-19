@@ -19,9 +19,9 @@ run = [
 ]
 
 [tasks."dev:be"]
-description = "Start FastAPI on localhost:8000"
+description = "Start FastAPI with reload and automatic API type generation"
 dir = "backend"
-run = "uv run uvicorn retrosprint_rag.main:create_app --factory --host localhost --port 8000"
+run = "uv run uvicorn dev:create_dev_app --factory --app-dir scripts --reload --reload-dir src --reload-dir scripts --host localhost --port 8000"
 
 [tasks."dev:fe"]
 description = "Start Nuxt on localhost:3000"

@@ -25,6 +25,7 @@ retrosprint-rag/
 │   │   ├── __init__.py
 │   │   └── main.py
 │   ├── scripts/
+│   │   ├── dev.py
 │   │   ├── export_openapi.py
 │   │   └── check_wheel.py
 │   └── tests/test_contract.py

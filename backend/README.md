@@ -18,6 +18,8 @@ mise run dev:be
 
 `http://localhost:8000/health` と `http://localhost:8000/docs` を利用できる。`mise run dev:be` はbackendを作業ディレクトリとし、そこにある `.env` を読む。
 
+起動時と `src/`・`scripts/` 内のPythonコード変更後の再起動時に、OpenAPIとFEの型を自動生成する。FEの依存導入も必要なため、先に `mise run setup` を実行する。生成に失敗した場合はサーバーを起動せず、エラーをターミナルへ出力する。修正・保存すると再起動時に再試行する。
+
 | 変数 | 既定値・用途 |
 | --- | --- |
 | `RETROSPRINT_ENABLE_DEV_API` | `false`。ローカルの `.env.example` では `true` にしてechoを有効化 |

@@ -38,6 +38,8 @@ mise run test:e2e
 mise run api:check
 ```
 
+BEを `mise run dev:be` で起動している間は、BEの起動時とPythonコード変更後の再起動時に型が自動更新される。BEを起動しない場合や単発で更新する場合は `mise run api:generate` を実行する。
+
 `api:generate` はFastAPI → OpenAPI → openapi-typescriptの順で生成する。`app/api/client.ts` はopenapi-fetchに生成したpaths型を渡す。request、成功応答、422応答を生成型から推論し、HTTP契約を手書きで重複定義しない。
 
 `check:fe` はNuxtの型検証、誤ったパス・必須項目欠落・数値message・存在しない応答フィールドを拒否する型テスト、通信中の重複防止の単体テスト、静的生成を実行する。
