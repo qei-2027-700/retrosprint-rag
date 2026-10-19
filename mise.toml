@@ -1,0 +1,80 @@
+[tools]
+node = "24.22.0"
+python = "3.13.5"
+pnpm = "10.34.7"
+uv = "0.8.15"
+
+[settings]
+activate_aggressive = true
+
+[env]
+UV_PYTHON = "python3"
+UV_PYTHON_PREFERENCE = "only-system"
+
+[tasks.setup]
+description = "Install backend and frontend dependencies from lockfiles"
+run = [
+  "uv sync --directory backend --frozen",
+  "pnpm --dir frontend install --frozen-lockfile",
+]
+
+[tasks."dev:be"]
+description = "Start FastAPI with reload and automatic API type generation"
+dir = "backend"
+run = "uv run uvicorn dev:create_dev_app --factory --app-dir scripts --reload --reload-dir src --reload-dir scripts --host localhost --port 8000"
+
+[tasks."dev:fe"]
+description = "Start Nuxt on localhost:3000"
+run = "pnpm --dir frontend dev"
+
+[tasks."api:generate"]
+description = "Export OpenAPI and generate frontend TypeScript types"
+run = [
+  "uv run --directory backend python scripts/export_openapi.py",
+  "pnpm --dir frontend api:generate",
+]
+
+[tasks."api:check"]
+description = "Regenerate API files and reject differences from Git"
+run = [{ task = "api:generate" }, "node scripts/check-generated.mjs"]
+
+[tasks."check:be"]
+description = "Check Python, test API contracts, and verify the built wheel"
+dir = "backend"
+run = [
+  "uv run ruff check .",
+  "uv run ruff format --check .",
+  "uv run mypy src scripts tests",
+  "uv run pytest",
+  "uv build --offline --no-cache",
+  "uv run python scripts/check_wheel.py",
+]
+
+[tasks."check:fe"]
+description = "Check frontend types, run unit tests, and generate the static site"
+run = [
+  "pnpm --dir frontend typecheck",
+  "pnpm --dir frontend test",
+  "pnpm --dir frontend generate",
+]
+
+[tasks."browser:install"]
+description = "Install Chromium for local E2E tests"
+run = "pnpm --dir frontend exec playwright install chromium"
+
+[tasks."browser:install:ci"]
+description = "Install Chromium and Linux system dependencies for CI"
+run = "pnpm --dir frontend exec playwright install --with-deps chromium"
+
+[tasks."test:e2e"]
+description = "Test the generated static frontend against a real backend"
+run = "pnpm --dir frontend test:e2e"
+
+[tasks.check]
+description = "Run backend, frontend, generated contract, and E2E checks in order"
+run = [
+  { task = "check:be" },
+  { task = "check:fe" },
+  { task = "api:check" },
+  { task = "test:e2e" },
+]

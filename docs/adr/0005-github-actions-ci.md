@@ -1,7 +1,7 @@
 # ADR-0005: GitHub ActionsでCIを実行する
 
 - 決定日：2026年10月18日
-- 状態：accepted（採用済み。workflowは未実装）
+- 状態：accepted（workflow実装済み。GitHub Actions上の成功を確認済み）
 - 関連：[開発計画 #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1)
 
 ## 背景
@@ -43,9 +43,9 @@ AWSデプロイの自動化は後続で設計する。初期の実行契機は�
 
 ## 検証方法と現在の結果
 
-現在は採用方針の文書化まで。アプリの実行コマンドとworkflowは未実装であり、GitHub Actionsの成功実績はまだない。
+2026年10月18日、Issue #2で `.github/workflows/ci.yml` と共通の `pnpm check` を実装した。新しいcheckoutからのローカル実行は成功し、型不一致・生成差分・APIテスト失敗の検出を確認した。2026年10月19日の確認時点で、Nuxt 5互換設定を含むコミット `de2a4e8` の[通常CI](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)も成功している。CDK・AWSの検証はまだ組み込んでいない。
 
-導入時には正常なPRの成功、意図的なテスト失敗・型生成差分の検出、AWS認証情報なしの通常CI実行を確認する。AWSを使うworkflowでは対象環境の制限・最小権限・停止条件を確認する。
+以後のmainへのpushとPRでも、GitHub Actions上の通常CIの結果を確認する。AWSを使うworkflowでは対象環境の制限・最小権限・停止条件を確認する。
 
 ## 再検討条件
 

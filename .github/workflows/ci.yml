@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          version: '2026.3.7'
+          install_args: --locked
+          cache: false
+      - run: mise run setup
+      - run: mise run browser:install:ci
+      - run: mkdir -p .logs && mise run check > .logs/check.log 2>&1
+      - name: Show validation log
+        if: always()
+        run: if [ -f .logs/check.log ]; then tail -100 .logs/check.log; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: validation-results
+          include-hidden-files: true
+          path: |
+            .logs/
+            frontend/test-results/
+          retention-days: 7

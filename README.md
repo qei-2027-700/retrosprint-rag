@@ -6,7 +6,7 @@
 
 ## 現在の状態
 
-2026年10月18日時点では設計・計画段階。このフォルダには設計資料があり、アプリケーションコード、依存定義、起動・デプロイ用スクリプトはまだない。アプリのテスト、CDK synth、AWS上の動作検証も未実施。
+2026年10月18日時点で、FastAPIのhealth・開発用echo、Nuxt 4の接続テスト画面、OpenAPIによる型生成、ローカル検証コマンドとGitHub Actions workflowを実装している。業務機能、DB・AWS接続、CDK・デプロイは未実装。PR #3の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)で通常CIの成功を確認済み。
 
 本READMEは、[開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) の最新方針と既存の3文書をまとめた入口となる。既存文書に残る仮称 `rag-portfolio`、バックエンド選定、期限については、本READMEとIssue #1に記載した更新後の方針を参照する。ディレクトリ構成は、その後の検討を反映した [配置方針](docs/architecture/repository-layout.md) に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
 
@@ -113,30 +113,66 @@ Issue #1の2026年10月16日の記録では、ETL側のGold View作成と専用�
 
 ## ディレクトリ構成
 
-ルート直下に `backend/`、`frontend/`、`infra/`、`docs/` を置く。API型とHTTPクライアントはfrontend内、品質評価はbackend内で管理する。
+現在の主要な配置を示す。API型とHTTPクライアントはfrontend内で管理する。
 
 ```text
 retrosprint-rag/
 ├── backend/
-│   ├── src/retrosprint_rag/   # 内部の詳細構造は未確定
+│   ├── src/retrosprint_rag/
+│   ├── scripts/
 │   ├── tests/
-│   └── evaluations/          # 合成資料・検索や回答の評価・実験結果
+│   ├── pyproject.toml
+│   └── uv.lock
 ├── frontend/
-│   ├── app/api/              # 生成型とHTTPクライアント
-│   └── openapi/              # FastAPIから出力するOpenAPI
-├── infra/                # AWS CDK / TypeScript
-└── docs/                     # 仕様・共通設計・ADR・既存の検討記録
+│   ├── app/api/              # HTTPクライアントと生成型
+│   ├── openapi/openapi.json  # FastAPIから生成
+│   ├── tests/
+│   ├── package.json
+│   └── pnpm-lock.yaml
+├── docs/                    # 仕様・共通設計・ADR・過去の検討記録
+├── scripts/                 # 生成差分の確認
+├── .github/workflows/
+├── mise.toml                # ツールのバージョン・共通タスク
+└── mise.lock                # ツール配布物の固定
 ```
 
-配置方針の正本は [リポジトリ構成](docs/architecture/repository-layout.md)。バックエンドはrepositoryのinterfaceと具体実装を分離する方針とする。内部のディレクトリ名・ファイル名・分割単位は未確定で、実装時に決める。
-
-この方針で従来の `apps/`・`packages/api-client/`・ルートの `evals/` 案を置き換える。図は実装時の配置を示すもので、実装済みの一覧ではない。
+詳細は [リポジトリ構成](docs/architecture/repository-layout.md) を参照する。infraと品質評価は未実装。導入時にはそれぞれinfraとbackend内に配置し、必要なファイルだけを追加する。バックエンドの業務処理はrepositoryのinterfaceと具体実装を分離する方針だが、内部の詳細構造は実装時に決める。
 
 ## 起動・検証
 
-現時点で実行可能な起動コマンドはない。実装に合わせて、必要なツールの版、環境変数、ローカル起動、テスト、デプロイ・削除手順を追加する。
+[mise](https://mise.jdx.dev/getting-started.html) を導入してから、リポジトリのルートで次の手順を実行する。CIではmise 2026.3.7を使う。シェルのactivate設定は必須ではなく、`mise run` と `mise exec -- <コマンド>` から固定したツールを利用できる。
 
-CIにはGitHub Actionsを採用する。frontendの型・テスト・ビルド、backendのlint・型・テスト、OpenAPI契約、CDK synthを、実行コマンドの整備に合わせて組み込む。通常CIと課金対象の実環境評価は分ける。workflowは未実装で、AWSデプロイの実行条件は未確定。[採用ADR](docs/adr/0005-github-actions-ci.md) を参照する。
+ツールのバージョンと共通コマンドはルートの `mise.toml` で管理する。Node 24.22.0、Python 3.13.5、pnpm 10.34.7、uv 0.8.15を使い、ツールの配布元とチェックサムは `mise.lock`、ライブラリ依存は `frontend/pnpm-lock.yaml` と `backend/uv.lock` に固定する。
+
+```sh
+mise trust mise.toml
+mise install --locked
+mise run setup
+cp -n backend/.env.example backend/.env
+cp -n frontend/.env.example frontend/.env
+```
+
+共通タスクとツールのバージョンはmiseで管理する。FEは `frontend/package.json` と `frontend/pnpm-lock.yaml`、BEは `backend/pyproject.toml` と `backend/uv.lock` で依存を管理する。現在はpnpm workspaceを使わず、ルートにpackage manifestやpnpmの設定・lockfileを置かない。
+
+`mise run dev:be` は起動時とBEのPythonコード変更後にOpenAPIとFEの型を自動更新する。
+
+別々のターミナルで `mise run dev:be` と `mise run dev:fe` を実行し、`http://localhost:3000` を開く。echoはbackendの環境設定で有効化する。APIは `http://localhost:8000`。設定と詳細手順は [Backend](backend/README.md)・[Frontend](frontend/README.md)、期待動作は [接続テスト仕様](docs/specs/dev-connectivity.md) を参照する。
+
+検証時は開発サーバーを停止して3000・8000番ポートを空ける。
+
+```sh
+mise run browser:install
+mkdir -p .logs
+mise run check > .logs/check.log 2>&1
+```
+
+`mise run check` はBEのlint・型・契約テスト・配布物ビルドと導入、FEの型・単体テスト・静的生成、OpenAPIと型の再生成差分、実HTTPのE2Eを実行する。個別には `mise run check:be`、`mise run check:fe`、`mise run api:generate`、`mise run api:check`、`mise run test:e2e` を使う。生成物を変更した場合はコミットしてから差分チェックを実行する。
+
+GitHub ActionsはmainへのpushとPRで同じ `mise run check` を実行する。通常CIはDB・AWS・認証情報を使わない。CDK synthやAWSデプロイは対象外。[CI採用ADR](docs/adr/0005-github-actions-ci.md) と [型生成ADR](docs/adr/0007-openapi-client.md) を参照する。
+
+2026年10月18日、mise導入前にNode 24.22.0・Python 3.13.5のローカル環境で、新しいcheckoutに対するlockfileからの依存導入と `pnpm check` が成功した。BEの契約テスト14件、FEの単体テスト1件、静的生成物から実APIに接続するE2E 8件を含む。型不一致、API契約変更後の型エラー・生成差分、未追跡の生成ファイル、APIテスト失敗も意図的な変更で検出を確認し、検証用の変更は復元した。
+
+この検証のログは `.logs/check-be.log`、`.logs/check-fe.log`、`.logs/api-check.log`、`.logs/fresh-check.log`、`.logs/negative-checks.log` に保存した。E2Eのスクリーンショットと失敗時traceの出力先は `frontend/test-results/`。CIではログとE2E出力を `validation-results` artifactに7日間保存する。ログと画面画像はGit管理しない。2026年10月19日の確認時点で、Nuxt 5互換設定を含むコミット `de2a4e8` の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)も成功している。実機のキーボード・縦横表示・スクリーンリーダーは未確認。
 
 RAGは検索のRecall@k、引用の整合性、根拠への忠実性、回答不能の正しさを固定評価で確認する。認可拒否、入力上限、重複・再試行、削除競合、履歴再開も検証する。評価値・応答時間・費用は測定条件とともに記録し、設計上の目標や見積もりを実績として扱わない。
 

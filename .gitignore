@@ -40,3 +40,9 @@ test-results/
 
 # Logs
 *.log
+
+# Local verification logs
+.logs/
+
+# Local symlink to Nuxt static output
+/frontend/dist
