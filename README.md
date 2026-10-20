@@ -6,7 +6,7 @@
 
 ## 現在の状態
 
-2026年10月18日時点で、FastAPIのhealth・開発用echo、Nuxt 4の接続テスト画面、OpenAPIによる型生成、ローカル検証コマンドとGitHub Actions workflowを実装している。業務機能、DB・AWS接続、CDK・デプロイは未実装。PR #3の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)で通常CIの成功を確認済み。
+2026年10月20日時点で、FastAPIのhealth・開発用echo、Nuxt 4の接続テスト画面、OpenAPIによる型生成、ローカル検証コマンドとGitHub Actions workflow、BEの開発用Docker Composeを実装している。業務機能、DB・AWS接続、CDK・デプロイは未実装。PR #3の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)で通常CIの成功を確認済み。
 
 本READMEは、[開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) の最新方針と既存の3文書をまとめた入口となる。既存文書に残る仮称 `rag-portfolio`、バックエンド選定、期限については、本READMEとIssue #1に記載した更新後の方針を参照する。ディレクトリ構成は、その後の検討を反映した [配置方針](docs/architecture/repository-layout.md) に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
 
@@ -118,6 +118,8 @@ Issue #1の2026年10月16日の記録では、ETL側のGold View作成と専用�
 ```text
 retrosprint-rag/
 ├── backend/
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── src/retrosprint_rag/
 │   ├── scripts/
 │   ├── tests/
@@ -133,12 +135,25 @@ retrosprint-rag/
 ├── scripts/                 # 生成差分の確認
 ├── .github/workflows/
 ├── mise.toml                # ツールのバージョン・共通タスク
-└── mise.lock                # ツール配布物の固定
+├── mise.lock                # ツール配布物の固定
+└── compose.yaml             # BEのローカル開発用
 ```
 
 詳細は [リポジトリ構成](docs/architecture/repository-layout.md) を参照する。infraと品質評価は未実装。導入時にはそれぞれinfraとbackend内に配置し、必要なファイルだけを追加する。バックエンドの業務処理はrepositoryのinterfaceと具体実装を分離する方針だが、内部の詳細構造は実装時に決める。
 
 ## 起動・検証
+
+BEだけをDocker Composeで起動する場合は、Docker EngineとCompose v2を用意し、ルートで実行する。BEの起動とOpenAPI出力には、ホストのPython・uv・miseは不要。
+
+```sh
+cp -n backend/.env.example backend/.env
+docker compose config --quiet
+docker compose up --build
+```
+
+APIは `http://localhost:8000/health`、Swagger UIは `http://localhost:8000/docs`。APIの `/` は404となる。FEはホストで起動する。FEの導入・起動とTypeScript型生成には、引き続きmise・Node・pnpmが必要。Composeでの起動・停止・依存更新・生成手順は [Backend](backend/README.md#docker-composeでbeを起動) を参照する。
+
+### ホストでBE・FEを起動する場合
 
 [mise](https://mise.jdx.dev/getting-started.html) を導入してから、リポジトリのルートで次の手順を実行する。CIではmise 2026.3.7を使う。シェルのactivate設定は必須ではなく、`mise run` と `mise exec -- <コマンド>` から固定したツールを利用できる。
 

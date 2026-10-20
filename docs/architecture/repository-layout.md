@@ -1,6 +1,6 @@
 # リポジトリ構成
 
-更新日：2026年10月19日。backend・frontendの疎通構成とCIを実装済み。業務機能、DB・AWS接続、infraは未実装。
+更新日：2026年10月20日。backend・frontendの疎通構成とCI、BEの開発用Composeを実装済み。業務機能、DB・AWS接続、infraは未実装。
 
 本書を現在の配置と今後の配置方針の参照先とする。構成図は現在の管理対象を示す。未実装の配置は後述し、必要な実装が生じたときに追加する。
 
@@ -18,6 +18,8 @@
 retrosprint-rag/
 ├── backend/
 │   ├── .env.example
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── README.md
 │   ├── pyproject.toml
 │   ├── uv.lock
@@ -68,7 +70,8 @@ retrosprint-rag/
 ├── CLAUDE.md
 ├── README.md
 ├── mise.toml
-└── mise.lock
+├── mise.lock
+└── compose.yaml             # BEのローカル開発用
 ```
 
 `mise.toml` はツールのバージョンと共通タスク、`mise.lock` はツール配布物を固定する。pnpmの依存定義・lockfile・install許可設定はFE内、uvの依存定義・lockfileはBE内で管理する。現在はpnpm workspaceを使わず、ルートの `package.json` やpnpmの設定・lockfileは不要。

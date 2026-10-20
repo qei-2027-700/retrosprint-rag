@@ -1,0 +1,14 @@
+# Only build inputs; never send local settings, credentials or virtualenvs.
+**
+!pyproject.toml
+!uv.lock
+!src/
+!src/**
+!scripts/
+!scripts/**
+!tests/
+!tests/**
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*
