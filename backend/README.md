@@ -6,6 +6,68 @@ Python 3.13.5、uv 0.8.15を使う。FastAPI、Pydantic、uvicornなどの解決
 
 ## 起動
 
+### Docker ComposeでBEを起動
+
+Docker EngineとCompose v2を用意し、リポジトリのルートで実行する。ホストのPython・uv・Node・pnpm・miseはBEの起動に不要。
+
+```sh
+cp -n backend/.env.example backend/.env
+docker compose config --quiet
+docker compose up --build
+```
+
+`http://localhost:8000/health` は200、`http://localhost:8000/docs` はSwagger UIを返す。APIの `/` にはルートを設けていないため404となる。コンテナ内では `0.0.0.0:8000` でlistenし、ホストには `127.0.0.1:8000` だけを公開する。
+
+`backend/.env` をComposeの `env_file` から渡す。`.env.example` は開発用echoを有効にし、ホストで起動するFEの `http://localhost:3000` をCORSで許可する。環境変数を変更したら `docker compose up -d --force-recreate` で反映する。
+
+Python 3.13.5 slim-bookwormとuv 0.8.15の公式イメージを、版とmulti-platform digestで固定する。依存は `uv.lock` を検証する `uv sync --locked` で導入する。更新時は `mise.toml`・`mise.lock`・build backendとの整合を保ち、Dockerfileの版とdigestも更新する。
+
+`src/` と `scripts/` だけを読み取り専用でbind mountし、Pythonコードの保存でuvicornがリロードする。仮想環境はイメージ内の `/opt/venv` に置き、ホストの `.venv` と共有しない。ビルド入力は `.dockerignore` で限定し、ローカルの `.env`・キャッシュ・認証情報をイメージへ送らない。
+
+別のターミナルから状態・ログを確認し、停止できる。
+
+```sh
+docker compose ps
+docker compose logs --tail=100 -f backend
+docker compose down
+```
+
+バックグラウンド起動は `docker compose up --build -d --wait`。依存を変えた場合は再ビルドする。更新するパッケージ名は必要なものに置き換える。
+
+```sh
+# uv.lockをホストへ書き戻す（ホストのuvは不要）
+docker compose run --rm --no-deps --volume "$(pwd)/backend:/workspace" --workdir /workspace backend uv lock --upgrade-package fastapi
+docker compose up --build -d --wait
+```
+
+`pyproject.toml`・`uv.lock`・Dockerfile・testsはイメージに取り込むため、変更後の反映には再ビルドが必要。テストは `docker compose run --rm --no-deps backend pytest` で実行できる。
+
+### ComposeのBEとホストのFEを接続
+
+FEを使う場合は、ホストにmiseとFE用ツールを導入してからルートで実行する。BE用の `mise run dev:be` は同時に起動しない。
+
+```sh
+mise trust mise.toml
+mise install --locked node pnpm
+mise exec -- pnpm --dir frontend install --frozen-lockfile
+cp -n frontend/.env.example frontend/.env
+mise run dev:fe
+```
+
+ブラウザは `http://localhost:3000`、API URLは `http://localhost:8000` を使う。`backend` はCompose内部のサービス名であり、ホストのブラウザには指定しない。FEのHMRは既存のホスト開発サーバーが行う。
+
+ComposeのBEはFastAPIのfactoryを直接起動し、起動・リロード時の型生成は行わない。API変更後は次の順でOpenAPIとTypeScript型を更新する。OpenAPIだけならDockerだけで生成できる。TypeScript型にはホストのNode・pnpmが必要。
+
+```sh
+docker compose run --rm --no-deps backend python scripts/export_openapi.py
+mise exec -- pnpm --dir frontend api:generate
+git diff -- frontend/openapi/openapi.json frontend/app/api/generated/schema.d.ts
+```
+
+OpenAPIの出力先だけをホストの `frontend/openapi/` と共有する。生成時は `.env` に依存せず開発用APIを有効にする。APIを変更していなければ、コミット済みの生成物から差分は出ない。
+
+### ホストでBEを起動
+
 ツールのバージョンはルートの `mise.toml` と `mise.lock` で管理する。miseを導入し、リポジトリのルートで実行する。
 
 ```sh
@@ -40,3 +102,14 @@ mise run api:check
 `api:generate` は `scripts/export_openapi.py` からアプリを構築し、開発用APIを含むOpenAPIとTypeScript型を出力する。起動済みサーバーへアクセスせず、開発用APIとCORS設定を明示して `.env` に依存しない契約を出力する。生成物は手編集しない。変更後は生成物もコミットする。
 
 HTTP契約の正本は `src/retrosprint_rag/main.py` のルートとPydanticモデル。期待動作と受入条件は [接続テスト仕様](../docs/specs/dev-connectivity.md) を参照する。
+
+## Composeの検証記録
+
+2026年10月20日、macOS arm64、Docker Engine 28.0.4、Compose v2.34.0で、既存の依存・環境設定を持ち込まない新しいcheckout相当の環境から確認した。
+
+- Composeの設定検証・キャッシュなしビルド・起動、health・docs・echo・CORS、リロード、停止・再起動、echo無効時の動作が成功した。仮想環境の分離と `uv lock --check` も確認した。
+- コンテナ内のpytestは14件成功し、OpenAPI・TypeScript型の再生成差分はなかった。
+- BEのlint・型・配布物検証、FEの型・単体テスト1件・静的生成、生成差分検証が成功した。Composeを停止した状態でE2Eも8件成功した。
+- ChromeでホストFEからComposeのBEへの接続、echo応答、BE停止時の通信エラーと入力保持、再起動後の再送を確認した。実AWSは未検証。
+
+実行コマンドと結果は `.logs/compose-validation.log`、共通検証とE2Eは `.logs/check.log`・`.logs/e2e-retry.log` に保存した。ブラウザの検証記録は `.logs/evidence/20261020-2140-compose-*`、BEログは `.logs/compose-browser-backend.log`。

@@ -12,6 +12,18 @@ HTTP形式は [生成OpenAPI](../../frontend/openapi/openapi.json) を参照す�
 
 `mise run dev:be` の起動時と、backendの `src/`・`scripts/` 内のPythonコード変更後の再起動時に、既存の `api:generate` を実行する。生成に失敗したプロセスではAPIを起動せず、ターミナルにエラーを出す。修正後の保存で再試行できる。生成物は引き続きGit管理し、CIで生成差分を検出する。
 
+## BEのCompose開発環境
+
+[Issue #4](https://github.com/qei-2027-700/retrosprint-rag/issues/4) はBEだけをCompose化する。FEはホストで起動し、既存のHMRを利用する。Python・uvをホストへ導入せず、DockerとComposeからBEを起動できることを目的とする。FEの起動とTypeScript型生成には、引き続きホストのNode・pnpmを使う。
+
+1. `.env.example` からBEの設定を用意し、`docker compose config` と `docker compose up --build` が成功する。
+2. BEはコンテナ内の `0.0.0.0:8000` でlistenし、ホストには `127.0.0.1:8000` だけを公開する。`/health` と `/docs` は200、`/` は404となる。
+3. 開発用echoの200・入力不正の422、ホストFEのoriginへのCORS許可、通信停止後の再起動・再送を確認する。echo無効時はルートとOpenAPIから除外する。
+4. Pythonソース保存時にBEがリロードする。ホストの仮想環境・依存・キャッシュを共有せず、依存はlockfileからイメージへ導入する。
+5. Compose経由でOpenAPI、ホストの既存FEコマンドでTypeScript型を生成でき、API未変更時に再生成差分が出ない。Composeでは起動・リロード時の自動生成を行わず、API変更後に明示的に生成する。
+
+起動・ログ・停止・再ビルド・依存更新・型生成・環境変数は [Backend README](../../backend/README.md#docker-composeでbeを起動) に記載する。新しいcheckout相当での実行コマンド・結果・ログの場所を記録し、既存の共通検証とCIを維持する。FE用Dockerfile、FEコンテナ、コンテナ内のTypeScript型生成、本番用コンテナとAWSは対象外。
+
 ## 状態と画面
 
 接続確認は未確認・確認中・成功・失敗を表示する。echoは未入力・送信中・成功・入力不正・HTTPエラー・通信失敗を扱い、入力不正と通信失敗を区別する。失敗後は入力を保持して修正・再送できる。
