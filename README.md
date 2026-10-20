@@ -8,7 +8,9 @@
 
 2026年10月20日時点で、FastAPIのhealth・開発用echo、Nuxt 4の接続テスト画面、OpenAPIによる型生成、ローカル検証コマンドとGitHub Actions workflow、BEの開発用Docker Composeを実装している。業務機能、DB・AWS接続、CDK・デプロイは未実装。PR #3の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)で通常CIの成功を確認済み。
 
-本READMEは、[開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) の最新方針と既存の3文書をまとめた入口となる。既存文書に残る仮称 `rag-portfolio`、バックエンド選定、期限については、本READMEとIssue #1に記載した更新後の方針を参照する。ディレクトリ構成は、その後の検討を反映した [配置方針](docs/architecture/repository-layout.md) に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
+本READMEを目的・採用技術・開発状況の入口とする。最終要件・未決事項・残る完了条件は [開発方針と完了条件](docs/project-plan.md)、ディレクトリ構成は [配置方針](docs/architecture/repository-layout.md) を参照する。既存の検討記録に残る仮称 `rag-portfolio`、バックエンド選定、期限は、これらの現行文書に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
+
+AWSアカウントは未作成。当面は合成資料とfakeを使い、ローカルのAPI・FEで質問から回答・出典表示までを実装する。AWSの採用方針は維持し、実AWSの接続・品質検証は別の作業として進める。
 
 ## 目指す使い方
 
@@ -69,7 +71,7 @@ go-drive-etl（取得・加工・ロード）
 
 年月指定には `reflection_month = @month` を使い、取り込み日や推測した開始・終了日で代用しない。月全体の要約には対象文書全体を取得する処理が必要で、top-k検索だけで網羅したとは扱わない。入力上限などで全文を扱えなければ、省略を明示する。
 
-Issue #1の2026年10月16日の記録では、ETL側のGold View作成と専用サービスアカウントによる月検索確認は完了している。AWSアプリ実行基盤からの認証・接続は未検証。正確な対象期間の重複検索は [go-drive-etl Issue #133](https://github.com/qei-2027-700/go-drive-etl/issues/133) で扱う。
+2026年10月16日の記録では、ETL側のGold View作成と専用サービスアカウントによる月検索確認は完了している。関連Issue・PRは [ETL連携の条件](docs/project-plan.md#etl連携の条件) にまとめている。AWSアプリ実行基盤からの認証・接続は未検証。正確な対象期間の重複検索は [go-drive-etl Issue #133](https://github.com/qei-2027-700/go-drive-etl/issues/133) で扱う。
 
 ## 最終的な必須機能
 
@@ -105,11 +107,13 @@ Issue #1の2026年10月16日の記録では、ETL側のGold View作成と専用�
 
 ### 次の作業
 
-1. モノレポの雛形、ADR、開発用の `AGENTS.md`、再現可能な起動・検証手順を整え、成果単位の実装Issueに分割する。
+1. 合成資料を使い、検索・回答生成をfakeで接続して、ローカルのAPI・FEで質問・回答・出典表示を通す。fakeであることを明示し、実検索・モデルの品質評価と区別する。
 2. ETL連携の候補を比較し、データ契約・認証・更新と削除・費用・中間デモの範囲を決める。
 3. サンプル1文書でBedrock embedding → S3 Vectors検索 → 根拠付き回答を検証し、実AWSとfakeの結果を分けて記録する。
 4. 認証・権限、アップロードと取り込み、複数ターンの会話・履歴を実装し、採用したETL連携を実行基盤から確認する。
 5. CI、固定評価、費用と利用枠、停止・復旧、デモと運用資料を整える。
+
+作業は成果単位の独立したIssueで管理する。包括的な親Issueへの紐づけは行わず、必要な仕様文書と具体的な依存Issueを参照する。アプリ全体の条件は [開発方針と完了条件](docs/project-plan.md#残る完了条件) を参照する。
 
 ## ディレクトリ構成
 
@@ -198,6 +202,6 @@ RAGは検索のRecall@k、引用の整合性、根拠への忠実性、回答不
 | [実行計画](docs/planning/rag-portfolio-plan.md) | 2026年10月12日の採用候補、実装順序、評価・運用の計画 |
 | [詳細設計](docs/planning/rag-portfolio-design.md) | API、保存方式、状態遷移、認証・認可、削除、障害回復、公開前の検証条件 |
 | [レビュー記録](docs/planning/rag-portfolio-review.md) | 設計への指摘、反映内容、実装時に残る判断・検証 |
-| [開発計画 Issue #1](https://github.com/qei-2027-700/retrosprint-rag/issues/1) | 正式名・採用技術・ETL連携・中間デモに関する更新後の方針とETL側の追跡 |
+| [開発方針と完了条件](docs/project-plan.md) | 最終要件・ETL連携条件・認可と削除・未決事項・残る完了条件 |
 
 3文書は設計時点の記録として参照する。設計への反映と実装検証の完了を区別し、実装時の重要な判断・変更・検証結果はADRへ残す。
