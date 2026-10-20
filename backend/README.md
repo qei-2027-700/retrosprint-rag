@@ -105,12 +105,11 @@ HTTP契約の正本は `src/retrosprint_rag/main.py` のルートとPydanticモ�
 
 ## Composeの検証記録
 
-2026年10月20日、macOS arm64、Docker Engine 28.0.4、Compose v2.34.0で確認した。ローカルcloneに今回の差分を適用した一時checkoutを使い、既存の `.venv`・`node_modules`・`.env` を持ち込まずに開始した。
+2026年10月20日、macOS arm64、Docker Engine 28.0.4、Compose v2.34.0で、既存の依存・環境設定を持ち込まない新しいcheckout相当の環境から確認した。
 
-1. `.env.example` をコピーし、`docker compose config --quiet`、`docker compose build --no-cache`、`docker compose up --no-build -d --wait` が成功した。実行コマンドと結果は `.logs/compose-validation.log`、一時checkoutの場所は `.logs/compose-checkout.txt` に保存した。
-2. health・docsの200、ルートの404、echoの空白除去と200・422、CORSの許可・拒否、echo無効時の404とOpenAPIからの除外を確認した。ソースへ一時的にルートを追加し、リロード後の200と復元後の404を確認した。停止時の通信失敗、再起動後のecho再送も成功した。
-3. コンテナ内のpytestは14件成功した。仮想環境が `/opt/venv` にあり、ホストの `.venv` と `.env` がコンテナの作業ディレクトリに存在しないことを確認した。依存更新用mountは絶対パスを使い、`uv lock --check` が成功した。
-4. コンテナからOpenAPIを出力し、一時checkoutへFE依存を `pnpm install --frozen-lockfile` で導入してTypeScript型を生成した。`git diff --exit-code -- frontend/openapi/openapi.json frontend/app/api/generated/schema.d.ts` で差分なしを確認した。
-5. 既存の `mise run check` ではBEのlint・型・14テスト・配布物検証、FEの型・1テスト・静的生成、生成差分検証が成功した。E2EはComposeとのポート競合で一度失敗したため、Composeを停止して `mise run test:e2e` を再実行し、8件成功した。ログは `.logs/check.log` と `.logs/e2e-retry.log`。既存のCI定義は変更していない。実AWSは未検証。
+- Composeの設定検証・キャッシュなしビルド・起動、health・docs・echo・CORS、リロード、停止・再起動、echo無効時の動作が成功した。仮想環境の分離と `uv lock --check` も確認した。
+- コンテナ内のpytestは14件成功し、OpenAPI・TypeScript型の再生成差分はなかった。
+- BEのlint・型・配布物検証、FEの型・単体テスト1件・静的生成、生成差分検証が成功した。Composeを停止した状態でE2Eも8件成功した。
+- ChromeでホストFEからComposeのBEへの接続、echo応答、BE停止時の通信エラーと入力保持、再起動後の再送を確認した。実AWSは未検証。
 
-同日、起動済みのホストFEとComposeのBEをChromeで接続し、health成功、echo応答と空白除去、BE停止時の通信エラーと入力保持、再起動後の再送成功を確認した。画像とJSONの検証記録は `.logs/evidence/20261020-2140-compose-*`、BEログは `.logs/compose-browser-backend.log` に保存した。確認後もFE・BEは起動した状態で残した。
+実行コマンドと結果は `.logs/compose-validation.log`、共通検証とE2Eは `.logs/check.log`・`.logs/e2e-retry.log` に保存した。ブラウザの検証記録は `.logs/evidence/20261020-2140-compose-*`、BEログは `.logs/compose-browser-backend.log`。
