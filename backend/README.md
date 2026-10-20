@@ -20,7 +20,7 @@ docker compose up --build
 
 `backend/.env` をComposeの `env_file` から渡す。`.env.example` は開発用echoを有効にし、ホストで起動するFEの `http://localhost:3000` をCORSで許可する。環境変数を変更したら `docker compose up -d --force-recreate` で反映する。
 
-Python 3.13.5 slim-bookwormとuv 0.8.15の公式イメージを、版とmulti-platform digestで固定する。依存は `uv.lock` を検証する `uv sync --locked` で導入する。更新時は `mise.toml`・`mise.lock`・build backendとの整合を保ち、Dockerfileの版とdigestも更新する。[採用理由](../docs/adr/0011-backend-compose.md) を参照する。
+Python 3.13.5 slim-bookwormとuv 0.8.15の公式イメージを、版とmulti-platform digestで固定する。依存は `uv.lock` を検証する `uv sync --locked` で導入する。更新時は `mise.toml`・`mise.lock`・build backendとの整合を保ち、Dockerfileの版とdigestも更新する。
 
 `src/` と `scripts/` だけを読み取り専用でbind mountし、Pythonコードの保存でuvicornがリロードする。仮想環境はイメージ内の `/opt/venv` に置き、ホストの `.venv` と共有しない。ビルド入力は `.dockerignore` で限定し、ローカルの `.env`・キャッシュ・認証情報をイメージへ送らない。
 
