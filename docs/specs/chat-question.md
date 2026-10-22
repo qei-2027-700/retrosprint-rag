@@ -1,6 +1,6 @@
 # 質問・回答・出典確認（fake版）
 
-状態：ローカル実装済み。BE契約26件・FE単体2件・実APIのE2E12件が成功。SP実機と実AWSは未確認。[Issue #6](https://github.com/qei-2027-700/retrosprint-rag/issues/6) の仕様。共通配置は [画面設計](../architecture/frontend-layout.md) に従う。
+状態：ローカル実装済み。BEテスト30件（契約26件・usecase単体4件）・FE単体2件・実APIのE2E12件が成功。SP実機と実AWSは未確認。[Issue #6](https://github.com/qei-2027-700/retrosprint-rag/issues/6) の仕様。共通配置は [画面設計](../architecture/frontend-layout.md) に従う。
 
 ## 範囲・利用条件
 

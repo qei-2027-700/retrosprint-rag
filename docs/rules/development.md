@@ -8,7 +8,7 @@ CodexとClaude Codeで同じルールを使う。共通ルールはこの文書�
 
 ## 実装と仕様
 
-- backendの詳細構造は未確定。repositoryのinterfaceと具体実装を分離し、利用側はinterfaceに依存する。具体的な分割は実装時に決める。
+- backendはhandler・usecase・interface・domain・adapterを分離する。利用側はinterfaceに依存し、domainとusecaseへHTTP・具体adapterの依存を持ち込まない。配置と依存方向は [バックエンドの分離方針](../architecture/repository-layout.md#バックエンドの分離方針) に従う。
 - 依頼に必要な範囲を実装・検証し、未使用の抽象化や空ディレクトリを一括作成しない。
 - 仕様変更は対象specと受入条件も更新する。重要な技術選定・構成変更はADRへ背景・理由・影響を記録する。
 - 採用方針、実装済み、fakeによる検証、実AWSで確認済みの状態を区別する。費用の見積もりを実測や承認済み予算として扱わない。

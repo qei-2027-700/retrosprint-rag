@@ -14,7 +14,7 @@ AWSアカウントは未作成。当面は合成資料とfakeを使い、ロー�
 
 ## ローカルのfakeチャット
 
-Issue #6で質問・回答・出典確認をローカル実装。BE契約26件、FE単体2件、実APIのE2E12件が成功。実AWSとSP実機のキーボード・縦横表示は未確認。`/` がチャット、`/dev/connectivity` が既存の接続テスト画面となる。開発用BEの `RETROSPRINT_ENABLE_DEV_API=true` を有効にして利用する。認証は未実装で、ローカル開発専用。
+Issue #6で質問・回答・出典確認をローカル実装。BEテスト30件（契約26件・usecase単体4件）、FE単体2件、実APIのE2E12件が成功。実AWSとSP実機のキーボード・縦横表示は未確認。`/` がチャット、`/dev/connectivity` が既存の接続テスト画面となる。開発用BEの `RETROSPRINT_ENABLE_DEV_API=true` を有効にして利用する。認証は未実装で、ローカル開発専用。
 
 代表質問「最近うまくいったことは？」で合成資料に基づく固定回答と出典を確認できる。「処理失敗の確認」は処理失敗、それ以外の有効な質問は根拠不足を返す。実検索・モデルは使わず、会話・入力を保存しない。PC・SPの画面、API契約、検証条件は [fakeチャット仕様](docs/specs/chat-question.md) を参照する。
 
@@ -40,7 +40,7 @@ Issue #6で質問・回答・出典確認をローカル実装。BE契約26件�
 | 認証 | Amazon Cognito |
 | ETL成果物 | BigQueryの `etl_gold.reflection_documents` を利用する計画 |
 
-バックエンドはrepositoryのinterfaceと具体実装を分離する。内部の詳細構造は未確定とする。業務層にAWS SDK、認証claim、BigQueryクライアントの具体型を持ち込まない。
+バックエンドはhandler・usecase・interface・domain・adapterを分離し、mainで依存を組み立てる。配置と依存方向は [分離方針](docs/architecture/repository-layout.md#バックエンドの分離方針) を参照する。業務層にAWS SDK、認証claim、BigQueryクライアントの具体型を持ち込まない。
 
 アプリのDBは [PostgreSQLを採用する](docs/adr/0006-postgresql.md)。旧設計のDynamoDB固有の保存・配送方式は見直す。Lambda、SQS、CloudFrontによる静的配信、非同期ジョブとポーリングは既存設計の構成案。リージョン、生成・embeddingモデル、次元数、予算・利用枠、公開方法の詳細と合わせて、検証後にADRへ判断を残す。
 
@@ -149,7 +149,7 @@ retrosprint-rag/
 └── compose.yaml             # BEのローカル開発用
 ```
 
-詳細は [リポジトリ構成](docs/architecture/repository-layout.md) を参照する。infraと品質評価は未実装。導入時にはそれぞれinfraとbackend内に配置し、必要なファイルだけを追加する。バックエンドの業務処理はrepositoryのinterfaceと具体実装を分離する方針だが、内部の詳細構造は実装時に決める。
+詳細は [リポジトリ構成](docs/architecture/repository-layout.md) を参照する。infraと品質評価は未実装。導入時にはそれぞれinfraとbackend内に配置し、必要なファイルだけを追加する。バックエンドの業務処理はinterfaceとdomainに依存し、HTTPモデル・具体adapterから分離する。DB・AWS等の詳細は導入時に決める。
 
 ## 起動・検証
 

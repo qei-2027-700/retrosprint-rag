@@ -11,5 +11,6 @@
 | [0008](0008-nuxt5-compatibility.md) | Nuxt 4でNuxt 5の互換設定を使う | accepted |
 | [0009](0009-mise-toolchain.md) | miseでツールと共通タスクを管理する | accepted |
 | [0010](0010-bundled-python-build.md) | uv同梱のPython build backendを使う | accepted |
+| [0011](0011-backend-layers.md) | バックエンドのHTTP・業務処理・具体実装を分離する | accepted |
 
 0004は移行元の番号を引き継いでいる。欠番を埋めるための文書は作らず、新規ADRは既存番号と重複しない番号で追加する。重要な判断を変更するときは新ADRから旧ADRへ置換リンクを付け、現行の仕様・構成書も更新する。

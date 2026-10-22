@@ -1,23 +1,13 @@
-"""HTTP entry point; constructing the app requires no external connections."""
-
-from typing import Annotated, Literal
+"""Composition root: configure HTTP and assemble concrete dependencies."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, StringConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from retrosprint_rag.questions import (
-    Answered,
-    FakeGeneration,
-    FakeSearch,
-    InsufficientEvidence,
-    ProcessingFailed,
-    QuestionError,
-    QuestionRequest,
-    ask,
-)
+from retrosprint_rag.adapters.fake import FakeGeneration, FakeSearch
+from retrosprint_rag.api.connectivity import create_echo_router, create_health_router
+from retrosprint_rag.api.questions import create_question_router
+from retrosprint_rag.application.questions import AskQuestion
 
 
 class Settings(BaseSettings):
@@ -25,23 +15,6 @@ class Settings(BaseSettings):
 
     enable_dev_api: bool = False
     cors_origins: list[str] = ["http://localhost:3000"]
-
-
-class HealthResponse(BaseModel):
-    status: Literal["ok"] = "ok"
-
-
-Message = Annotated[
-    str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=200)
-]
-
-
-class EchoRequest(BaseModel):
-    message: Message
-
-
-class EchoResponse(BaseModel):
-    message: str
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -54,27 +27,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["Content-Type"],
         allow_credentials=False,
     )
-
-    @app.get("/health", response_model=HealthResponse, operation_id="get_health")
-    def health() -> HealthResponse:
-        return HealthResponse()
-
+    app.include_router(create_health_router())
     if config.enable_dev_api:
-
-        @app.post("/api/v1/dev/echo", response_model=EchoResponse, operation_id="echo_message")
-        def echo(body: EchoRequest) -> EchoResponse:
-            return EchoResponse(message=body.message)
-
-        @app.post(
-            "/api/questions",
-            response_model=Answered | InsufficientEvidence,
-            responses={500: {"model": QuestionError}},
-            operation_id="ask_question",
-        )
-        def question(body: QuestionRequest) -> Answered | InsufficientEvidence | JSONResponse:
-            try:
-                return ask(body.question, FakeSearch(), FakeGeneration())
-            except ProcessingFailed:
-                return JSONResponse(status_code=500, content=QuestionError().model_dump())
-
+        app.include_router(create_echo_router())
+        usecase = AskQuestion(search=FakeSearch(), generation=FakeGeneration())
+        app.include_router(create_question_router(usecase))
     return app
