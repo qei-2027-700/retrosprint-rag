@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Question */
+        post: operations["ask_question"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dev/echo": {
         parameters: {
             query?: never;
@@ -42,6 +59,52 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Answer */
+        Answer: {
+            /** Citation Ids */
+            citation_ids: string[];
+            /** Text */
+            text: string;
+        };
+        /** Answered */
+        Answered: {
+            answer: components["schemas"]["Answer"];
+            /** Citations */
+            citations: components["schemas"]["Citation"][];
+            /**
+             * Mode
+             * @default fake
+             * @constant
+             */
+            mode: "fake";
+            /**
+             * Status
+             * @default answered
+             * @constant
+             */
+            status: "answered";
+        };
+        /** Citation */
+        Citation: {
+            /** Content Version */
+            content_version: string;
+            /** Document Id */
+            document_id: string;
+            /** Document Name */
+            document_name: string;
+            /** Heading */
+            heading: string;
+            /** Id */
+            id: string;
+            /** Original Text */
+            original_text: string;
+            /** Page */
+            page?: number | null;
+            /** Quote */
+            quote: string;
+            /** Reflection Month */
+            reflection_month: string;
+        };
         /** EchoRequest */
         EchoRequest: {
             /** Message */
@@ -66,6 +129,47 @@ export interface components {
              */
             status: "ok";
         };
+        /** InsufficientEvidence */
+        InsufficientEvidence: {
+            /** Answer */
+            answer?: null;
+            /**
+             * Citations
+             * @default []
+             */
+            citations: components["schemas"]["Citation"][];
+            /**
+             * Mode
+             * @default fake
+             * @constant
+             */
+            mode: "fake";
+            /**
+             * Status
+             * @default insufficient_evidence
+             * @constant
+             */
+            status: "insufficient_evidence";
+        };
+        /** QuestionError */
+        QuestionError: {
+            /**
+             * Code
+             * @default question_processing_failed
+             * @constant
+             */
+            code: "question_processing_failed";
+            /**
+             * Message
+             * @default 回答処理に失敗しました。もう一度送信してください。
+             */
+            message: string;
+        };
+        /** QuestionRequest */
+        QuestionRequest: {
+            /** Question */
+            question: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -88,6 +192,48 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    ask_question: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Answered"] | components["schemas"]["InsufficientEvidence"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionError"];
+                };
+            };
+        };
+    };
     echo_message: {
         parameters: {
             query?: never;

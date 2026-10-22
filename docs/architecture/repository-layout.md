@@ -84,11 +84,29 @@ retrosprint-rag/
 
 ## バックエンドの分離方針
 
-backendの詳細構造は未確定とする。現時点で決めるのは、repositoryのinterface（契約）と具体実装を分離し、利用側はinterfaceを通して呼び出すこと。ディレクトリ名、ファイル名、分割単位、層別構成は実装時に決める。
+backendはhandler・usecase・interface・domain・adapterを分離する。[ADR-0011](../adr/0011-backend-layers.md) に依存方向と判断を記載する。repositoryや外部サービスの利用側はinterface（契約）を通して呼び出す。
 
-これまで挙げた `models.py`、`interfaces.py`、`repositories/`、`services/`、`api.py`、`workers.py`、`bootstrap.py` は配置案であり、採用済みの構造として扱わない。細かな層分けや空ディレクトリの先行作成は求めない。
+現在の配置は以下とする。HTTPモデルとdomainの型を分け、内部型をそのままHTTP契約として公開しない。
 
-認可・削除・非同期・費用制御等の既存要件は維持する。内部構造を未確定とすることで、それらの要件が不要になるわけではない。
+```text
+backend/src/retrosprint_rag/
+├── main.py                     # 設定・依存の組み立て・router登録
+├── api/
+│   ├── questions.py            # 質問のAPIRouter・handler・HTTP変換
+│   ├── schemas.py              # 質問のHTTP入力・出力モデル
+│   └── connectivity.py         # health・開発用echoのrouterとhandler
+├── application/
+│   ├── questions.py            # 質問usecase・処理結果
+│   └── ports.py                # 検索・回答生成のinterfaceと処理失敗
+├── domain/models.py            # 引用・生成回答の業務データ
+└── adapters/fake.py            # fake実装と合成資料
+```
+
+`api` は `application` を呼び、`application` はinterfaceとdomainだけに依存する。`adapters` はそのinterfaceを実装する。`domain` は標準ライブラリだけで定義し、HTTP・FastAPI・Pydantic・具体adapterを参照しない。`main.py` で具体adapterを選び、usecaseへ注入してrouterを登録する。
+
+DB・AWS・worker等の詳細構造は導入時に決める。未使用の基底クラスや空の配置を先行作成しない。
+
+認可・削除・非同期・費用制御等の既存要件は維持し、各機能の導入時に層間の責務を具体化する。
 
 ### Pythonパッケージ
 

@@ -113,3 +113,7 @@ HTTP契約の正本は `src/retrosprint_rag/main.py` のルートとPydanticモ�
 - ChromeでホストFEからComposeのBEへの接続、echo応答、BE停止時の通信エラーと入力保持、再起動後の再送を確認した。実AWSは未検証。
 
 実行コマンドと結果は `.logs/compose-validation.log`、共通検証とE2Eは `.logs/check.log`・`.logs/e2e-retry.log` に保存した。ブラウザの検証記録は `.logs/evidence/20261020-2140-compose-*`、BEログは `.logs/compose-browser-backend.log`。
+
+## 内部構造
+
+`main.py` が設定と具体adapterを組み立て、APIRouterを登録する。`api/` はhandlerとHTTPモデル、`application/` はusecaseとinterface、`domain/` は業務データ、`adapters/` はfake等の具体実装を置く。usecaseとdomainはFastAPI・Pydantic・具体adapterを参照しない。詳細は [配置・依存方向](../docs/architecture/repository-layout.md#バックエンドの分離方針) と [ADR-0011](../docs/adr/0011-backend-layers.md) を参照する。

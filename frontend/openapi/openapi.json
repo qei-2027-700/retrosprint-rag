@@ -1,6 +1,118 @@
 {
   "components": {
     "schemas": {
+      "Answer": {
+        "properties": {
+          "citation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Citation Ids",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "citation_ids"
+        ],
+        "title": "Answer",
+        "type": "object"
+      },
+      "Answered": {
+        "properties": {
+          "answer": {
+            "$ref": "#/components/schemas/Answer"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "mode": {
+            "const": "fake",
+            "default": "fake",
+            "title": "Mode",
+            "type": "string"
+          },
+          "status": {
+            "const": "answered",
+            "default": "answered",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer",
+          "citations"
+        ],
+        "title": "Answered",
+        "type": "object"
+      },
+      "Citation": {
+        "properties": {
+          "content_version": {
+            "title": "Content Version",
+            "type": "string"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "string"
+          },
+          "document_name": {
+            "title": "Document Name",
+            "type": "string"
+          },
+          "heading": {
+            "title": "Heading",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "original_text": {
+            "title": "Original Text",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "reflection_month": {
+            "title": "Reflection Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "document_id",
+          "document_name",
+          "content_version",
+          "reflection_month",
+          "heading",
+          "quote",
+          "original_text"
+        ],
+        "title": "Citation",
+        "type": "object"
+      },
       "EchoRequest": {
         "properties": {
           "message": {
@@ -54,6 +166,68 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "InsufficientEvidence": {
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "null"
+          },
+          "citations": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "mode": {
+            "const": "fake",
+            "default": "fake",
+            "title": "Mode",
+            "type": "string"
+          },
+          "status": {
+            "const": "insufficient_evidence",
+            "default": "insufficient_evidence",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "InsufficientEvidence",
+        "type": "object"
+      },
+      "QuestionError": {
+        "properties": {
+          "code": {
+            "const": "question_processing_failed",
+            "default": "question_processing_failed",
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "default": "回答処理に失敗しました。もう一度送信してください。",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "title": "QuestionError",
+        "type": "object"
+      },
+      "QuestionRequest": {
+        "properties": {
+          "question": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "QuestionRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -102,6 +276,62 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/questions": {
+      "post": {
+        "operationId": "ask_question",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Answered"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InsufficientEvidence"
+                    }
+                  ],
+                  "title": "Response Ask Question"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionError"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Question"
+      }
+    },
     "/api/v1/dev/echo": {
       "post": {
         "operationId": "echo_message",

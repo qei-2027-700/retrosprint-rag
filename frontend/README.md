@@ -26,7 +26,7 @@ cp -n frontend/.env.example frontend/.env
 mise run dev:fe
 ```
 
-`http://localhost:3000` を開く。接続先はNuxtのpublic runtime configで管理し、`NUXT_PUBLIC_API_BASE_URL` の既定値は `http://localhost:8000`。公開される設定なので認証情報を入れない。
+`http://localhost:3000` はfakeチャット、`http://localhost:3000/dev/connectivity` は接続テスト。接続先はNuxtのpublic runtime configで管理し、`NUXT_PUBLIC_API_BASE_URL` の既定値は `http://localhost:8000`。公開される設定なので認証情報を入れない。
 
 ## 型生成・検証・静的配信
 
