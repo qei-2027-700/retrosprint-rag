@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const route = useRoute()
 const drawer = ref<HTMLDialogElement>()
 const menu = ref<HTMLButtonElement>()
 function openDrawer() { drawer.value?.showModal() }
@@ -39,7 +40,7 @@ onBeforeUnmount(() => desktop?.removeEventListener('change', onBreakpoint))
       <header class="mobile-header">
         <button ref="menu" aria-label="メニューを開く" aria-controls="mobile-drawer"
           aria-haspopup="dialog" class="menu-button" @click="openDrawer">☰</button>
-        <span>Retrosprint</span>
+        <span>{{ route.path === "/" ? "チャット" : "Retrosprint" }}</span>
       </header>
       <main id="main" tabindex="-1"><slot /></main>
     </div>

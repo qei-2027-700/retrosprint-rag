@@ -13,8 +13,8 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'ja' },
-      title: '接続テスト | Retrosprint',
-      meta: [{ name: 'description', content: 'Retrosprint の開発用API疎通確認' }],
+      title: 'Retrosprint',
+      meta: [{ name: 'description', content: '振り返りの質問・回答・出典を確認するローカルデモ' }],
     },
   },
   typescript: { strict: true, tsConfig: { compilerOptions: { noUncheckedIndexedAccess: true } } },

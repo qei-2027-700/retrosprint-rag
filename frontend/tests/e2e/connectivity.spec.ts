@@ -43,7 +43,7 @@ for (const width of [320, 390, 768, 1280]) {
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
     await page.setViewportSize({ width, height: 850 })
-    await page.goto('/')
+    await page.goto('/dev/connectivity')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(page.getByText('未確認です')).toBeVisible()
     await page.keyboard.press('Tab')
@@ -71,7 +71,7 @@ for (const width of [320, 390, 768, 1280]) {
       await page.mouse.click(width - 5, 400)
       await expect(dialog).not.toBeVisible()
       await open.click()
-      await dialog.getByRole('link', { name: '接続テスト' }).click()
+      await dialog.getByRole('link', { name: '接続テスト（開発用）' }).click()
       await expect(dialog).not.toBeVisible()
     }
     const message = `  https://example.com/${'a'.repeat(150)}  `
@@ -91,7 +91,7 @@ for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 850 })
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
-    await page.goto('/')
+    await page.goto('/dev/connectivity')
     const input = page.getByLabel('メッセージ', { exact: true })
     const send = page.getByRole('button', { name: '送信する' })
     await input.fill('a'.repeat(201))
@@ -114,5 +114,46 @@ for (const width of [320, 390, 768, 1280]) {
     await input.fill('新しい入力')
     await expect(page.getByTestId('echo-response')).toHaveCount(0)
     expect(errors).toEqual([])
+  })
+}
+
+for (const width of [320, 390, 768, 1280]) {
+  test(`question, evidence and failures at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 850 })
+    await page.goto('/')
+    const input = page.getByLabel('質問', { exact: true })
+    const send = page.getByRole('button', { name: '送信', exact: true })
+    await page.getByRole('button', { name: '最近うまくいったことは？' }).click()
+    const answered = page.waitForResponse(r => r.url().endsWith('/api/questions') && r.status() === 200)
+    await send.click()
+    await answered
+    await expect(page.getByText('作業を小さく分けることで、着手しやすくなっています。')).toBeVisible()
+    await page.getByText('出典を確認', { exact: true }).click()
+    await expect(page.getByRole('heading', { name: '合成原文' })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    const transcript = page.locator('.chat-transcript')
+    const composer = page.locator('.composer-area')
+    const t = await transcript.boundingBox(); const c = await composer.boundingBox()
+    expect(t!.y + t!.height).toBeLessThanOrEqual(c!.y + 1)
+    await page.screenshot({ path: testInfo.outputPath(`chat-source-${width}.png`), fullPage: true })
+    await input.fill('根拠のない質問')
+    await send.click()
+    await expect(page.getByText('回答の根拠となる資料が見つかりませんでした。質問を変えてお試しください。')).toBeVisible()
+    await input.fill('処理失敗の確認')
+    await send.click()
+    await expect(page.getByRole('alert')).toHaveText('回答処理に失敗しました。もう一度送信してください。')
+    await expect(input).toHaveValue('処理失敗の確認')
+    await input.fill('a'.repeat(2001)); await send.click()
+    await expect(input).toHaveAttribute('aria-invalid', 'true')
+    await input.fill('最近うまくいったことは？')
+    await stopBackend(); await send.click()
+    await expect(page.getByRole('alert')).toHaveText('通信できませんでした。接続を確認して再送してください。')
+    await expect(input).toHaveValue('最近うまくいったことは？')
+    await startBackend(); await send.click()
+    await expect(page.getByText('作業を小さく分けることで、着手しやすくなっています。')).toBeVisible()
+    if (width < 768) await page.getByRole('button', { name: 'メニューを開く' }).click()
+    await page.getByRole('button', { name: '新しいチャット' }).filter({ visible: true }).click()
+    await expect(input).toHaveValue('')
+    await expect(page.getByText('振り返りから、')).toBeVisible()
   })
 }
