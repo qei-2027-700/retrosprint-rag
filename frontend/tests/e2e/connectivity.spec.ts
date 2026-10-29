@@ -4,26 +4,29 @@ import { openSync, closeSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../../../', import.meta.url))
+const backendPort = process.env.RETROSPRINT_E2E_BACKEND_PORT || '8000'
+const frontendPort = process.env.RETROSPRINT_E2E_FRONTEND_PORT || '3000'
+const apiBase = `http://localhost:${backendPort}`
 let backend: ChildProcess | undefined
 async function startBackend() {
   // A pre-existing server must never make this test pass accidentally.
   try {
-    await fetch('http://localhost:8000/health')
-    throw new Error('Port 8000 is already in use; stop the existing API before running E2E')
+    await fetch(`${apiBase}/health`)
+    throw new Error(`Port ${backendPort} is already in use; stop the existing API before running E2E`)
   } catch (error) {
     if (!(error instanceof TypeError)) throw error
   }
   mkdirSync(new URL('../../../.logs/', import.meta.url), { recursive: true })
   const log = openSync(new URL('../../../.logs/e2e-backend.log', import.meta.url), 'a')
   backend = spawn('uv', ['run', '--directory', 'backend', 'uvicorn', 'retrosprint_rag.main:create_app',
-    '--factory', '--host', 'localhost', '--port', '8000'], {
-    cwd: root, env: { ...process.env, RETROSPRINT_ENABLE_DEV_API: 'true', RETROSPRINT_CORS_ORIGINS: '["http://localhost:3000"]' },
+    '--factory', '--host', 'localhost', '--port', backendPort], {
+    cwd: root, env: { ...process.env, RETROSPRINT_ENABLE_DEV_API: 'true', RETROSPRINT_CORS_ORIGINS: JSON.stringify([`http://localhost:${frontendPort}`]) },
     detached: true, stdio: ['ignore', log, log],
   })
   closeSync(log)
   await expect.poll(async () => {
     if (backend?.exitCode !== null) throw new Error('Backend exited; see .logs/e2e-backend.log')
-    try { return (await fetch('http://localhost:8000/health')).status } catch { return 0 }
+    try { return (await fetch(`${apiBase}/health`)).status } catch { return 0 }
   }).toBe(200)
 }
 async function stopBackend() {
@@ -155,5 +158,53 @@ for (const width of [320, 390, 768, 1280]) {
     await page.getByRole('button', { name: '新しいチャット' }).filter({ visible: true }).click()
     await expect(input).toHaveValue('')
     await expect(page.getByText('振り返りから、')).toBeVisible()
+  })
+}
+
+for (const width of [390, 1280]) {
+  test(`retrieval purpose, month and coverage at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 850 })
+    await page.goto('/')
+    const purpose = page.getByLabel('用途', { exact: true })
+    const month = page.getByLabel('対象年月', { exact: false })
+    const input = page.getByLabel('質問', { exact: true })
+    const send = page.getByRole('button', { name: '送信', exact: true })
+    await purpose.selectOption('monthly_reflection')
+    await input.fill('この月の成果と悩みを整理して')
+    await send.click()
+    await expect(page.getByRole('alert')).toContainText('年月が必要')
+    await month.fill('2026-09')
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    await page.route('**/api/questions', async route => { await gate; await route.continue() }, { times: 1 })
+    await send.click()
+    await expect(page.getByRole('button', { name: '送信中…', exact: true })).toBeDisabled()
+    await expect(purpose).toBeDisabled()
+    await expect(month).toBeDisabled()
+    await expect(input).toBeDisabled()
+    release()
+    await expect(page.getByText('取得 2件 / 生成入力 2件', { exact: false })).toBeVisible()
+    await expect(page.getByText('対象月の文書全文', { exact: false })).toBeVisible()
+    await expect(page.getByText('状態：answered', { exact: false })).toBeVisible()
+    await page.screenshot({ path: testInfo.outputPath(`monthly-coverage-${width}.png`), fullPage: true })
+    await page.getByText('出典を確認', { exact: true }).first().click()
+    await expect(page.getByText('reflection-2026-09 / v1', { exact: true })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath(`monthly-${width}.png`), fullPage: true })
+    for (const [value, status] of [['2025-01', 'no_documents'], ['2026-08', 'input_limit_exceeded']] as const) {
+      await month.fill(value); await send.click()
+      await expect(page.getByText(`状態：${status}`, { exact: false })).toBeVisible()
+    }
+    await expect(page.getByText('省略：あり', { exact: false })).toBeVisible()
+    await month.fill('2026-06'); await send.click()
+    await expect(page.getByRole('alert')).toHaveText('資料を取得できませんでした。')
+    await expect(input).toHaveValue('この月の成果と悩みを整理して')
+    await expect(month).toHaveValue('2026-06')
+    await purpose.selectOption('related_search'); await month.fill('')
+    await input.fill('旧版のみの確認'); await send.click()
+    await expect(page.getByText('状態：stale_evidence', { exact: false })).toBeVisible()
+    await input.fill('相談のタイミングで悩んだ経験は？'); await month.fill('2026-10'); await send.click()
+    await expect(page.getByText('取得 1件 / 生成入力 1件', { exact: false })).toBeVisible()
+    await expect(page.getByText('関連箇所（最大5箇所・網羅しません）', { exact: false })).toBeVisible()
   })
 }

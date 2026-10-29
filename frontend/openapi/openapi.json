@@ -34,10 +34,43 @@
             "title": "Citations",
             "type": "array"
           },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
           "mode": {
             "const": "fake",
             "default": "fake",
             "title": "Mode",
+            "type": "string"
+          },
+          "reflection_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Month"
+          },
+          "retrieval_mode": {
+            "enum": [
+              "monthly_reflection",
+              "related_search"
+            ],
+            "title": "Retrieval Mode",
             "type": "string"
           },
           "status": {
@@ -48,6 +81,9 @@
           }
         },
         "required": [
+          "retrieval_mode",
+          "reflection_month",
+          "coverage",
           "answer",
           "citations"
         ],
@@ -65,20 +101,48 @@
             "type": "string"
           },
           "document_name": {
-            "title": "Document Name",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Name"
+          },
+          "drive_url": {
+            "title": "Drive Url",
+            "type": "null"
           },
           "heading": {
-            "title": "Heading",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading"
           },
           "id": {
             "title": "Id",
             "type": "string"
           },
+          "locator": {
+            "$ref": "#/components/schemas/Locator"
+          },
           "original_text": {
-            "title": "Original Text",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Text"
           },
           "page": {
             "anyOf": [
@@ -96,8 +160,15 @@
             "type": "string"
           },
           "reflection_month": {
-            "title": "Reflection Month",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Month"
           }
         },
         "required": [
@@ -108,9 +179,63 @@
           "reflection_month",
           "heading",
           "quote",
-          "original_text"
+          "original_text",
+          "locator"
         ],
         "title": "Citation",
+        "type": "object"
+      },
+      "Coverage": {
+        "properties": {
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "documents_retrieved": {
+            "title": "Documents Retrieved",
+            "type": "integer"
+          },
+          "documents_used": {
+            "title": "Documents Used",
+            "type": "integer"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "omitted": {
+            "title": "Omitted",
+            "type": "boolean"
+          },
+          "scope": {
+            "enum": [
+              "month_documents",
+              "search_matches"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "complete",
+          "omitted",
+          "documents_retrieved",
+          "documents_used",
+          "checked_at"
+        ],
+        "title": "Coverage",
         "type": "object"
       },
       "EchoRequest": {
@@ -180,20 +305,81 @@
             "title": "Citations",
             "type": "array"
           },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
           "mode": {
             "const": "fake",
             "default": "fake",
             "title": "Mode",
             "type": "string"
           },
+          "reflection_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Month"
+          },
+          "retrieval_mode": {
+            "enum": [
+              "monthly_reflection",
+              "related_search"
+            ],
+            "title": "Retrieval Mode",
+            "type": "string"
+          },
           "status": {
-            "const": "insufficient_evidence",
             "default": "insufficient_evidence",
+            "enum": [
+              "insufficient_evidence",
+              "no_documents",
+              "stale_evidence",
+              "input_limit_exceeded"
+            ],
             "title": "Status",
             "type": "string"
           }
         },
+        "required": [
+          "retrieval_mode",
+          "reflection_month",
+          "coverage"
+        ],
         "title": "InsufficientEvidence",
+        "type": "object"
+      },
+      "Locator": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "integer"
+          },
+          "start": {
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "Locator",
         "type": "object"
       },
       "QuestionError": {
@@ -214,11 +400,33 @@
         "type": "object"
       },
       "QuestionRequest": {
+        "additionalProperties": false,
         "properties": {
           "question": {
             "maxLength": 2000,
             "minLength": 1,
             "title": "Question",
+            "type": "string"
+          },
+          "reflection_month": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Month"
+          },
+          "retrieval_mode": {
+            "default": "related_search",
+            "enum": [
+              "monthly_reflection",
+              "related_search"
+            ],
+            "title": "Retrieval Mode",
             "type": "string"
           }
         },
@@ -226,6 +434,33 @@
           "question"
         ],
         "title": "QuestionRequest",
+        "type": "object"
+      },
+      "RetrievalError": {
+        "properties": {
+          "code": {
+            "enum": [
+              "retrieval_failed",
+              "generation_failed"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ],
+        "title": "RetrievalError",
         "type": "object"
       },
       "ValidationError": {
@@ -327,6 +562,26 @@
               }
             },
             "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetrievalError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetrievalError"
+                }
+              }
+            },
+            "description": "Service Unavailable"
           }
         },
         "summary": "Question"

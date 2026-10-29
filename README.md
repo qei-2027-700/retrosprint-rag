@@ -6,7 +6,7 @@
 
 ## 現在の状態
 
-2026年10月20日時点で、FastAPIのhealth・開発用echo、Nuxt 4の接続テスト画面、OpenAPIによる型生成、ローカル検証コマンドとGitHub Actions workflow、BEの開発用Docker Composeを実装している。ローカルのfakeチャットを追加実装し、単一質問の回答・出典確認まで検証した。認証・履歴保存など残る業務機能、DB・AWS接続、CDK・デプロイは未実装。PR #3の[GitHub Actions](https://github.com/qei-2027-700/retrosprint-rag/actions/runs/39138159089)で通常CIの成功を確認済み。
+2026年10月29日時点で、FastAPI・Nuxt 4・OpenAPI型生成・通常CI・開発用Composeと、用途別fakeのAPI・画面を実装している。月の振り返りは合成資料の全文、関連検索は固定の合成根拠を使う。認証・履歴保存、DB・BigQuery・AWS接続、CDK・デプロイは未実装。
 
 本READMEを目的・採用技術・開発状況の入口とする。最終要件・未決事項・残る完了条件は [開発方針と完了条件](docs/project-plan.md)、ディレクトリ構成は [配置方針](docs/architecture/repository-layout.md) を参照する。既存の検討記録に残る仮称 `rag-portfolio`、バックエンド選定、期限は、これらの現行文書に従う。アプリのDBはPostgreSQLを採用する。DBの配置先やAPIの実行基盤は引き続き検討対象とする。
 
@@ -14,9 +14,9 @@ AWSアカウントは未作成。当面は合成資料とfakeを使い、ロー�
 
 ## ローカルのfakeチャット
 
-Issue #6で質問・回答・出典確認をローカル実装。BEテスト30件（契約26件・usecase単体4件）、FE単体2件、実APIのE2E12件が成功。実AWSとSP実機のキーボード・縦横表示は未確認。`/` がチャット、`/dev/connectivity` が既存の接続テスト画面となる。開発用BEの `RETROSPRINT_ENABLE_DEV_API=true` を有効にして利用する。認証は未実装で、ローカル開発専用。
+用途別fakeのAPI・画面を実装。`/` がチャット、`/dev/connectivity` が接続テスト画面となる。`RETROSPRINT_ENABLE_DEV_API=true` のときだけ質問APIを有効にする。認証未実装のローカル開発専用で、外部サービスには接続せず、入力・会話を保存しない。
 
-代表質問「最近うまくいったことは？」で合成資料に基づく固定回答と出典を確認できる。「処理失敗の確認」は処理失敗、それ以外の有効な質問は根拠不足を返す。実検索・モデルは使わず、会話・入力を保存しない。PC・SPの画面、API契約、検証条件は [fakeチャット仕様](docs/specs/chat-question.md) を参照する。
+月の振り返りは2026年9月を選び「この月の成果と悩みを整理して」で2文書の全文を生成fakeへ渡す。関連検索の代表質問「最近うまくいったことは？」も維持する。文書なし・旧版・上限・取得失敗の再現方法は[用途別spec](docs/specs/reflection-retrieval.md#ローカルfakeの再現方法)を参照する。実検索・モデルの品質、実AWS、SP実機の操作は未検証。
 
 ## 目指す使い方
 
@@ -107,7 +107,7 @@ go-drive-etl（取得・加工・ロード）
 
 ### 次の作業
 
-1. 実装済みの単一質問fakeを、用途別のAPI・画面・合成資料へ拡張する。fakeであることを明示し、実検索・モデルの品質評価と区別する。
+1. 用途別fakeで確認したAPI・画面を維持し、合成資料で実接続を段階的に検証する。実検索・モデルの品質評価はfakeの検証と区別する。
 2. 採用した用途別併用の設計に沿って、用途別API・BigQuery接続・認可・AWS基盤と手動取り込みを独立した作業として実装する。
 3. サンプル1文書でBedrock embedding → S3 Vectors検索 → 根拠付き回答を検証し、実AWSとfakeの結果を分けて記録する。
 4. 認証・権限、アップロードと取り込み、複数ターンの会話・履歴を実装し、採用したETL連携を実行基盤から確認する。
@@ -183,6 +183,12 @@ cp -n frontend/.env.example frontend/.env
 mise run browser:install
 mkdir -p .logs
 mise run check > .logs/check.log 2>&1
+```
+
+3000・8000番が使用中の場合は、既存サーバーを止めず、生成時とE2Eのポートを揃えて検証できる。
+
+```sh
+NUXT_PUBLIC_API_BASE_URL=http://localhost:8300 RETROSPRINT_E2E_FRONTEND_PORT=3300 RETROSPRINT_E2E_BACKEND_PORT=8300 mise run check > .logs/check.log 2>&1
 ```
 
 `mise run check` はBEのlint・型・契約テスト・配布物ビルドと導入、FEの型・単体テスト・静的生成、OpenAPIと型の再生成差分、実HTTPのE2Eを実行する。個別には `mise run check:be`、`mise run check:fe`、`mise run api:generate`、`mise run api:check`、`mise run test:e2e` を使う。生成物を変更した場合はコミットしてから差分チェックを実行する。

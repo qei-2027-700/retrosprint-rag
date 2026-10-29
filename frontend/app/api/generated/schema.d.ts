@@ -71,12 +71,22 @@ export interface components {
             answer: components["schemas"]["Answer"];
             /** Citations */
             citations: components["schemas"]["Citation"][];
+            coverage: components["schemas"]["Coverage"];
+            /** Message */
+            message?: string | null;
             /**
              * Mode
              * @default fake
              * @constant
              */
             mode: "fake";
+            /** Reflection Month */
+            reflection_month: string | null;
+            /**
+             * Retrieval Mode
+             * @enum {string}
+             */
+            retrieval_mode: "monthly_reflection" | "related_search";
             /**
              * Status
              * @default answered
@@ -91,19 +101,42 @@ export interface components {
             /** Document Id */
             document_id: string;
             /** Document Name */
-            document_name: string;
+            document_name: string | null;
+            /** Drive Url */
+            drive_url?: null;
             /** Heading */
-            heading: string;
+            heading: string | null;
             /** Id */
             id: string;
+            locator: components["schemas"]["Locator"];
             /** Original Text */
-            original_text: string;
+            original_text: string | null;
             /** Page */
             page?: number | null;
             /** Quote */
             quote: string;
             /** Reflection Month */
-            reflection_month: string;
+            reflection_month: string | null;
+        };
+        /** Coverage */
+        Coverage: {
+            /** Checked At */
+            checked_at: string;
+            /** Complete */
+            complete: boolean;
+            /** Documents Retrieved */
+            documents_retrieved: number;
+            /** Documents Used */
+            documents_used: number;
+            /** Last Sync At */
+            last_sync_at?: string | null;
+            /** Omitted */
+            omitted: boolean;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "month_documents" | "search_matches";
         };
         /** EchoRequest */
         EchoRequest: {
@@ -138,18 +171,35 @@ export interface components {
              * @default []
              */
             citations: components["schemas"]["Citation"][];
+            coverage: components["schemas"]["Coverage"];
+            /** Message */
+            message?: string | null;
             /**
              * Mode
              * @default fake
              * @constant
              */
             mode: "fake";
+            /** Reflection Month */
+            reflection_month: string | null;
+            /**
+             * Retrieval Mode
+             * @enum {string}
+             */
+            retrieval_mode: "monthly_reflection" | "related_search";
             /**
              * Status
              * @default insufficient_evidence
-             * @constant
+             * @enum {string}
              */
-            status: "insufficient_evidence";
+            status: "insufficient_evidence" | "no_documents" | "stale_evidence" | "input_limit_exceeded";
+        };
+        /** Locator */
+        Locator: {
+            /** End */
+            end: number;
+            /** Start */
+            start: number;
         };
         /** QuestionError */
         QuestionError: {
@@ -169,6 +219,26 @@ export interface components {
         QuestionRequest: {
             /** Question */
             question: string;
+            /** Reflection Month */
+            reflection_month?: string | null;
+            /**
+             * Retrieval Mode
+             * @default related_search
+             * @enum {string}
+             */
+            retrieval_mode: "monthly_reflection" | "related_search";
+        };
+        /** RetrievalError */
+        RetrievalError: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "retrieval_failed" | "generation_failed";
+            /** Message */
+            message: string;
+            /** Request Id */
+            request_id: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -230,6 +300,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrievalError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrievalError"];
                 };
             };
         };
