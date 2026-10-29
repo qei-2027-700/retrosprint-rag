@@ -6,7 +6,7 @@
 
 目的・利用者・採用技術・実装状況は [README](../README.md)、配置・API契約・評価コードの方針は [リポジトリ構成](architecture/repository-layout.md)、重要な技術判断は [ADR](adr/README.md) を参照する。仕様はdocs、作業と検証結果はIssue・PR・CIで管理する。2026年10月12日の `planning/` 内の3文書は検討履歴であり、現行方針と競合する記述は採用しない。
 
-BE・FEの疎通、OpenAPI型生成、通常CI、BEの開発用Composeは実装済み。単一質問のfakeチャットはローカル実装・検証済み。認証・履歴保存など残る業務機能、DB・AWS接続、CDK・デプロイは未実装。AWSアカウントは未作成のため、当面は公開可能な合成資料とfakeを使い、ローカルでAPIからFEまでの質問・回答・出典表示を実装する。fakeの動作確認を実際の検索・モデルの品質検証として扱わない。
+BE・FEの疎通、OpenAPI型生成、通常CI、BEの開発用Composeは実装済み。用途別fakeの月全文取得・関連検索APIと画面をローカル実装済み。認証・履歴保存など残る業務機能、DB・AWS接続、CDK・デプロイは未実装。AWSアカウントは未作成のため、当面は公開可能な合成資料とfakeを使い、ローカルでAPIからFEまでの質問・回答・出典表示を実装する。fakeの動作確認を実際の検索・モデルの品質検証として扱わない。
 
 AWS先行・CDK・Bedrock・S3 Vectors・Cognitoの採用方針は維持する。React/Vite・Gemini、GCPへの全面移行やGCP上のアプリ基盤の同時実装は初期要件にしない。LangChainはBedrock接続・文書分割に限定する案があり、LangGraph・LangSmith・SSEは必須にしない。
 
@@ -26,7 +26,7 @@ AWS先行・CDK・Bedrock・S3 Vectors・Cognitoの採用方針は維持する�
 
 ## ETL連携の条件
 
-`go-drive-etl` は取得・加工・ロード、アプリは検索・回答・画面を担当する。[ADR-0012](adr/0012-bigquery-aws-retrieval.md)で用途別併用を採用した。月全文はBigQuery、関連検索はAWSを使う。[機能spec](specs/reflection-retrieval.md)と[接続・同期設計](architecture/reflection-data.md)は設計済みで、実装・実接続は未完了。
+`go-drive-etl` は取得・加工・ロード、アプリは検索・回答・画面を担当する。[ADR-0012](adr/0012-bigquery-aws-retrieval.md)で用途別併用を採用した。月全文はBigQuery、関連検索はAWSを使う。[機能spec](specs/reflection-retrieval.md)と[接続・同期設計](architecture/reflection-data.md)は設計済み。用途別fakeは実装済みで、実接続は未完了。
 
 上流の現行文書は `etl_gold.retro_documents` の文書単位本文、ID・版・出典・取り込み日時を公開する。SQLでは `retro_month = @month` を使い、アプリ側の `reflection_month` に対応づける。デプロイ済み環境の列・型・NULL条件は接続時に確認する。集計表やCSVを本文の代わりにせず、通常Viewを永続コピーとして扱わない。
 

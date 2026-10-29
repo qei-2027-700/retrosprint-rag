@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from retrosprint_rag.adapters.fake import FakeGeneration, FakeSearch
+from retrosprint_rag.adapters.fake import FakeGeneration, FakeMonthDocuments, FakeSearch
 from retrosprint_rag.api.connectivity import create_echo_router, create_health_router
 from retrosprint_rag.api.questions import create_question_router
 from retrosprint_rag.application.questions import AskQuestion
@@ -30,6 +30,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(create_health_router())
     if config.enable_dev_api:
         app.include_router(create_echo_router())
-        usecase = AskQuestion(search=FakeSearch(), generation=FakeGeneration())
+        usecase = AskQuestion(
+            search=FakeSearch(), generation=FakeGeneration(), months=FakeMonthDocuments()
+        )
         app.include_router(create_question_router(usecase))
     return app

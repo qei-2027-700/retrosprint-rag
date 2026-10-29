@@ -2,7 +2,7 @@
 
 状態：ローカル実装済み。BEテスト30件（契約26件・usecase単体4件）・FE単体2件・実APIのE2E12件が成功。SP実機と実AWSは未確認。[Issue #6](https://github.com/qei-2027-700/retrosprint-rag/issues/6) の仕様。共通配置は [画面設計](../architecture/frontend-layout.md) に従う。
 
-後続の[月の振り返り・関連検索](reflection-retrieval.md)は設計採用済み・未実装。本書の既存fake契約は変更していない。
+[月の振り返り・関連検索](reflection-retrieval.md)の用途別fakeへ拡張済み。本書の代表質問と失敗ケースを維持し、追加の用途・年月・取得範囲は後続specを正本とする。
 
 ## 範囲・利用条件
 
@@ -57,7 +57,7 @@ SP（768px未満）は上部にメニューボタンと画面タイトル、中�
 
 FastAPIで質問・回答・出典・根拠不足の契約を定義し、OpenAPIからTypeScript型を生成する。FEは既存HTTPクライアントと生成型を使い、HTTP契約を手書きで重複定義しない。
 
-`POST /api/questions` に `{ "question": "質問文" }` を送る。質問は前後空白を除去して1〜2,000文字とし、文字列以外・欠落・空白のみ・上限超過を422で拒否する。FEのタイムアウトは10秒とする。
+`POST /api/questions` に `{ "question": "質問文" }` を送る。質問は前後空白を除去して1〜2,000文字とし、文字列以外・欠落・空白のみ・上限超過を422で拒否する。FEのタイムアウトは65秒とする。
 
 200の応答は `status` で区別する。`answered` は `answer.text`、`answer.citation_ids`、`citations` を返す。`insufficient_evidence` は `answer: null`、`citations: []` を返す。どちらも `mode: fake` を含む。出典は `id`、`document_id`、`document_name`、`content_version`、`reflection_month`、`heading`、`page`、`quote`、`original_text` を持つ。回答の `citation_ids` を出典の `id` に対応づけ、版を固定した合成原文を応答に含めて引用と照合する。
 
