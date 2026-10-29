@@ -8,7 +8,7 @@
 
 BE・FEの疎通、OpenAPI型生成、通常CI、BEの開発用Composeは実装済み。単一質問のfakeチャットはローカル実装・検証済み。認証・履歴保存など残る業務機能、DB・AWS接続、CDK・デプロイは未実装。AWSアカウントは未作成のため、当面は公開可能な合成資料とfakeを使い、ローカルでAPIからFEまでの質問・回答・出典表示を実装する。fakeの動作確認を実際の検索・モデルの品質検証として扱わない。
 
-AWS先行・CDK・Bedrock・S3 Vectors・Cognitoの採用方針は維持する。React/Vite・Gemini、GCPへの全面移行やGCP adapterの同時実装は初期要件にしない。LangChainはBedrock接続・文書分割に限定する案があり、LangGraph・LangSmith・SSEは必須にしない。
+AWS先行・CDK・Bedrock・S3 Vectors・Cognitoの採用方針は維持する。React/Vite・Gemini、GCPへの全面移行やGCP上のアプリ基盤の同時実装は初期要件にしない。LangChainはBedrock接続・文書分割に限定する案があり、LangGraph・LangSmith・SSEは必須にしない。
 
 ## 最終的な必須機能
 
@@ -26,11 +26,11 @@ AWS先行・CDK・Bedrock・S3 Vectors・Cognitoの採用方針は維持する�
 
 ## ETL連携の条件
 
-`go-drive-etl` は取得・加工・ロード、アプリは検索・回答・画面を担当する。BigQueryの `etl_gold.reflection_documents` の文書単位の最新本文、`file_id`、`document_name`、`drive_url`、`content_version`、`reflection_month`、取り込み日時などを契約として扱い、集計表やCSVを本文の代わりにしない。
+`go-drive-etl` は取得・加工・ロード、アプリは検索・回答・画面を担当する。[ADR-0012](adr/0012-bigquery-aws-retrieval.md)で用途別併用を採用した。月全文はBigQuery、関連検索はAWSを使う。[機能spec](specs/reflection-retrieval.md)と[接続・同期設計](architecture/reflection-data.md)は設計済みで、実装・実接続は未完了。
 
-AWSからBigQueryを直接参照、AWS側への文書取り込み、用途別併用を比較してADRで決める。認証、NULL、更新・再取り込み・重複・削除、出典、元データの保持期限、越境転送、費用を評価する。通常Viewが永続コピーを保持するとは扱わない。Google Cloud認証情報はブラウザへ渡さない。
+上流の現行文書は `etl_gold.retro_documents` の文書単位本文、ID・版・出典・取り込み日時を公開する。SQLでは `retro_month = @month` を使い、アプリ側の `reflection_month` に対応づける。デプロイ済み環境の列・型・NULL条件は接続時に確認する。集計表やCSVを本文の代わりにせず、通常Viewを永続コピーとして扱わない。
 
-年月指定は `reflection_month = @month` を使い、取り込み日や推測した対象期間で代用しない。月全体の要約は全文取得と入力上限を扱い、top-k類似検索だけで網羅したとは扱わない。日本時間の月境界・欠損・省略を明示する。
+月取得は日本時間の年月ラベルで全文を扱い、取り込み日や期間の推測・top-kで代用しない。全文上限超過では生成を止めて範囲を表示する。AWS同期は初期は手動とし、文書ID・版・本文digest・世代で更新と削除を管理する。上流ではDriveの削除・権限変更を検知していないため、個人資料は確認経路の検証完了まで接続しない。Google Cloud認証情報はブラウザへ渡さない。
 
 ETL側ではSilver公開（[Issue #128](https://github.com/qei-2027-700/go-drive-etl/issues/128) / [PR #132](https://github.com/qei-2027-700/go-drive-etl/pull/132)）、文書単位Gold View（[Issue #129](https://github.com/qei-2027-700/go-drive-etl/issues/129) / [PR #136](https://github.com/qei-2027-700/go-drive-etl/pull/136)）の完了記録がある。専用サービスアカウントによる月検索・権限検証（[Issue #137](https://github.com/qei-2027-700/go-drive-etl/issues/137) / [PR #138](https://github.com/qei-2027-700/go-drive-etl/pull/138)）は2026年10月16日の記録で完了している。これはAWSアプリ実行基盤からの接続検証とは別。正確な対象期間の重複検索は [go-drive-etl #133](https://github.com/qei-2027-700/go-drive-etl/issues/133) の後続作業であり、年月ラベルの検索自体は妨げない。
 
@@ -50,7 +50,7 @@ ETL側ではSilver公開（[Issue #128](https://github.com/qei-2027-700/go-drive
 
 2026年10月末は、公開可能なサンプルの「検索 → 回答 → 出典確認」と画面またはAPIの代表操作を示す中間デモを目指す。約40%は目標の目安であり、現在の達成率や測定済み工数ではない。最終必須機能一式の完成と区別し、実AWS確認済み・fake・未実装を明示する。10月末以降も開発を継続する。
 
-PostgreSQLは採用済み。配置先・ORM・テーブル設計、API実行基盤・配送、リージョン、生成・embeddingモデルと次元、今後導入する依存の版、予算・利用枠、MFA・招待方式・保持期間、ETL接続方式、中間デモの詳細は未決定。過去のLambda・DynamoDB・SQS等の構成案を採用済みとして扱わない。既存の数値・費用試算を承認済み予算や実測として扱わない。
+PostgreSQLは採用済み。配置先・ORM・テーブル設計、API実行基盤・配送、リージョン、生成・embeddingモデルと次元、今後導入する依存の版、予算・利用枠、MFA・招待方式・保持期間、個人資料の権限・削除確認経路、実接続の設定・費用枠は未確定。ETL接続方式と中間デモの段階はADR-0012と機能specで設計済み。過去のLambda・DynamoDB・SQS等の構成案を採用済みとして扱わない。既存の数値・費用試算を承認済み予算や実測として扱わない。
 
 ## 残る完了条件
 
@@ -60,7 +60,7 @@ PostgreSQLは採用済み。配置先・ORM・テーブル設計、API実行基�
 | --- | --- |
 | 開発基盤 | docs・ADR・共通ルール・起動と検証手順の整合を保つ。雛形・疎通・型生成・通常CI・BE Composeは実装済み |
 | RAG | サンプル1文書でBedrock embedding → S3 Vectors検索 → 根拠付き回答を通し、実AWSとfakeの結果を分けて記録する |
-| ETL | 接続候補を比較し、データ契約・認証・更新削除・費用・中間デモ範囲をADRで決め、実行基盤から確認する |
+| ETL | 用途別併用を設計済み。データ契約・認証・更新削除・費用制限を実装し、実行基盤から確認する |
 | 業務機能 | 認証認可、アップロード・状態管理、複数ターン・会話履歴、文書管理を実装する |
 | 異常系 | 所有者・権限拒否、根拠不足・引用対応、再読み込み、入力上限、配送失敗、重複・再試行、削除競合と復旧を検証する |
 | CI | 既存のFE型・テスト・build、BE lint・型・テスト、API生成差分を維持し、infra導入時にCDK synthを追加する。通常CIと課金対象の評価を分ける |

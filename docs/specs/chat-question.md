@@ -2,6 +2,8 @@
 
 状態：ローカル実装済み。BEテスト30件（契約26件・usecase単体4件）・FE単体2件・実APIのE2E12件が成功。SP実機と実AWSは未確認。[Issue #6](https://github.com/qei-2027-700/retrosprint-rag/issues/6) の仕様。共通配置は [画面設計](../architecture/frontend-layout.md) に従う。
 
+後続の[月の振り返り・関連検索](reflection-retrieval.md)は設計採用済み・未実装。本書の既存fake契約は変更していない。
+
 ## 範囲・利用条件
 
 公開可能な合成資料を使い、ローカルのNuxtからFastAPIへ単一の質問を送り、fakeによる回答と出典を確認する。検索・回答生成の契約とfake実装を分離し、外部サービスへの接続は行わない。画面に「合成資料を使ったデモ・回答はfake」と表示する。

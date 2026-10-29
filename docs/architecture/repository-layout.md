@@ -80,7 +80,7 @@ retrosprint-rag/
 
 `docs/planning/` は過去の検討記録を保持する。現行の仕様・設計は `specs/`、`architecture/`、`adr/`、AI開発の共通ルールは `rules/` に記載する。旧資料の構成図を現在の配置として扱わない。
 
-アプリのDBは [PostgreSQLを採用する](../adr/0006-postgresql.md)。配置先・ORM・テーブル構造、APIの実行基盤、キュー配送、ETL接続方式は未決定。具体adapterは選定した方式に合わせて追加する。
+アプリのDBは [PostgreSQLを採用する](../adr/0006-postgresql.md)。配置先・ORM・テーブル構造、APIの実行基盤、キュー配送は未決定。ETL接続は[用途別併用](../adr/0012-bigquery-aws-retrieval.md)を採用したが、実接続は未実装。具体adapterは選定した方式に合わせて追加する。
 
 ## バックエンドの分離方針
 

@@ -38,7 +38,7 @@ Issue #6で質問・回答・出典確認をローカル実装。BEテスト30�
 | 回答生成・embedding | Amazon Bedrock |
 | ベクトル保存・類似検索 | Amazon S3 Vectors |
 | 認証 | Amazon Cognito |
-| ETL成果物 | BigQueryの `etl_gold.reflection_documents` を利用する計画 |
+| ETL成果物 | BigQueryの `etl_gold.retro_documents` を利用する計画 |
 
 バックエンドはhandler・usecase・interface・domain・adapterを分離し、mainで依存を組み立てる。配置と依存方向は [分離方針](docs/architecture/repository-layout.md#バックエンドの分離方針) を参照する。業務層にAWS SDK、認証claim、BigQueryクライアントの具体型を持ち込まない。
 
@@ -52,8 +52,8 @@ LangChainはBedrock接続と文書分割に限定して使う案がある。Lang
 
 ```text
 go-drive-etl（取得・加工・ロード）
-  └─ BigQuery: etl_gold.reflection_documents
-       └─ ETL連携adapter（直接参照 / AWS取り込み / 用途別併用を検討）
+  └─ BigQuery: etl_gold.retro_documents
+       └─ ETL連携adapter（月全文はBigQuery / 関連検索はAWS）
             │
 ブラウザ ─ Nuxt 4 ─ FastAPI（認証・認可、文書・会話API）
              │       ├─ 文書取り込み・検索・回答のusecase / worker
@@ -65,17 +65,11 @@ go-drive-etl（取得・加工・ロード）
 
 ### ETLとの連携
 
-`etl_gold.reflection_documents` の文書単位の最新本文と、`file_id`、`document_name`、`drive_url`、`content_version`、`reflection_month`、取り込み日時などを利用する。集計表やCSVを文書本文の代わりにはしない。
+月全体の振り返りはBigQueryから全文取得し、関連する経験はAWSで類似検索する[用途別併用を採用した](docs/adr/0012-bigquery-aws-retrieval.md)。APIの用途・年月・取得範囲と状態は[機能spec](docs/specs/reflection-retrieval.md)、認証・データ契約・手動同期・更新削除・後続作業は[接続設計](docs/architecture/reflection-data.md)を参照する。設計の採用であり、実接続は未実装・未検証。
 
-| 接続案 | 検討する内容 |
-| --- | --- |
-| BigQuery直接参照 | AWSバックエンドからパラメータ付きSQLで対象月・文書を取得する。実行基盤からのGoogle Cloud認証・接続を検証する |
-| AWS側へ取り込み | 認可された本文をS3へ取り込み、Bedrock embeddingとS3 Vectorsへ接続する。原文のID・版・出典を保持する |
-| 用途別に併用 | 月全体の取得と類似検索など、用途に応じて使い分ける |
+上流の現行名称は `etl_gold.retro_documents` / `retro_month`。アプリの `reflection_month` へadapterで対応づける。文書単位の本文、ID・版・出典・取り込み日時を使い、集計表やCSVを本文の代わりにしない。デプロイ済み環境の名称・型・NULL条件は接続時に照合する。
 
-方式は未決定。認証、更新・再取り込み・削除、重複、出典、越境転送、費用を比較し、データ契約とともにADRで決める。サンプル文書によるAWS RAGの構成検証と、ETL連携の設計は並行して進められる。
-
-年月指定には `reflection_month = @month` を使い、取り込み日や推測した開始・終了日で代用しない。月全体の要約には対象文書全体を取得する処理が必要で、top-k検索だけで網羅したとは扱わない。入力上限などで全文を扱えなければ、省略を明示する。
+月条件はパラメータ付きの `retro_month = @month` とする。取り込み日や推測した期間で代用せず、top-kだけで月全体を網羅したとは扱わない。全文が上限を超える場合は生成を止め、省略を明示する。AWS取り込みは初期は手動とし、質問APIから分離する。上流ではDrive上の削除・権限変更を検知していないため、個人資料の接続前に確認経路を検証する。
 
 2026年10月16日の記録では、ETL側のGold View作成と専用サービスアカウントによる月検索確認は完了している。関連Issue・PRは [ETL連携の条件](docs/project-plan.md#etl連携の条件) にまとめている。AWSアプリ実行基盤からの認証・接続は未検証。正確な対象期間の重複検索は [go-drive-etl Issue #133](https://github.com/qei-2027-700/go-drive-etl/issues/133) で扱う。
 
@@ -113,8 +107,8 @@ go-drive-etl（取得・加工・ロード）
 
 ### 次の作業
 
-1. 合成資料を使い、検索・回答生成をfakeで接続して、ローカルのAPI・FEで質問・回答・出典表示を通す。fakeであることを明示し、実検索・モデルの品質評価と区別する。
-2. ETL連携の候補を比較し、データ契約・認証・更新と削除・費用・中間デモの範囲を決める。
+1. 実装済みの単一質問fakeを、用途別のAPI・画面・合成資料へ拡張する。fakeであることを明示し、実検索・モデルの品質評価と区別する。
+2. 採用した用途別併用の設計に沿って、用途別API・BigQuery接続・認可・AWS基盤と手動取り込みを独立した作業として実装する。
 3. サンプル1文書でBedrock embedding → S3 Vectors検索 → 根拠付き回答を検証し、実AWSとfakeの結果を分けて記録する。
 4. 認証・権限、アップロードと取り込み、複数ターンの会話・履歴を実装し、採用したETL連携を実行基盤から確認する。
 5. CI、固定評価、費用と利用枠、停止・復旧、デモと運用資料を整える。
