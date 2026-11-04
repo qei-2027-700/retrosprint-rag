@@ -1,6 +1,6 @@
 # 月の振り返り・関連する経験の検索
 
-状態：設計採用、未実装。[Issue #8](https://github.com/qei-2027-700/retrosprint-rag/issues/8)の成果物。[ADR-0012](../adr/0012-bigquery-aws-retrieval.md)、[データ・接続・同期設計](../architecture/reflection-data.md)を参照する。現在の実装は[単一質問のfake版](chat-question.md)のままとする。
+状態：用途別fakeのAPI・画面を実装。実接続は未実装。[Issue #8](https://github.com/qei-2027-700/retrosprint-rag/issues/8)の成果物。[ADR-0012](../adr/0012-bigquery-aws-retrieval.md)、[データ・接続・同期設計](../architecture/reflection-data.md)を参照する。[既存fake](chat-question.md)の代表質問・失敗ケースを保ち、本書の用途別契約へ拡張した。
 
 ## 用途と操作
 
@@ -12,7 +12,7 @@
 
 ## 要求契約
 
-`POST /api/questions` を拡張する。以下は実装前の設計例で、実装時はFastAPIからOpenAPI・TypeScript型を生成する。
+`POST /api/questions` を拡張する。FastAPIからOpenAPI・TypeScript型を生成する。以下は要求例。
 
 ```json
 {"question":"この月の成果と悩みを整理して","retrieval_mode":"monthly_reflection","reflection_month":"2026-09"}
@@ -113,3 +113,27 @@ APIでCognito tokenと現在の利用状態を検証し、usecaseへ利用者の
 デモは段階を分ける。まず用途別fakeでAPI・FEと失敗状態を検証し、次に合成資料のBigQuery実取得を生成fakeで確認する。最後に手動AWS取り込み・実検索・実生成を確認する。未達の段階はfakeまたは未実装と明示し、実接続デモ完了とはしない。
 
 受入時はOpenAPI・型生成、usecase・adapter契約テスト、APIとFEのE2Eを更新し、`mise run check` を通す。認証・課金なしの通常CIと、実接続・品質・費用の検証を分ける。月全文の取得確認、検索結果の引用整合性、更新・削除後の利用停止を合成資料で検証し、コード・資料・モデル・設定の版と検証範囲を記録する。
+
+
+## ローカルfakeの再現方法
+
+`RETROSPRINT_ENABLE_DEV_API=true` で起動する。用途省略は関連検索となる。実行方式はすべて `mode: fake` で、外部サービス・認証・永続化は使わない。
+
+| 用途・年月 | 質問 | 結果 |
+| --- | --- | --- |
+| 月の振り返り・2026-09 | この月の成果と悩みを整理して | 合成2文書の全文を生成入力に渡し、ID・版・引用位置・取得2件/使用2件を返す |
+| 月の振り返り・2025-01 | 任意の有効な質問 | `no_documents` |
+| 月の振り返り・2026-09 | 根拠のない質問 | `insufficient_evidence`。全文取得後に生成fakeが回答不能と判断 |
+| 月の振り返り・2026-08 | 任意の有効な質問 | 合成51文書で `input_limit_exceeded`。生成なし、取得51件、使用0件、省略あり |
+| 月の振り返り・2026-06 | 任意の有効な質問 | 503 `retrieval_failed` |
+| 関連検索・年月任意 | 最近うまくいったことは？ | 既存の固定回答。2026-09以外の月指定では根拠不足 |
+| 関連検索・指定なし/2026-09/2026-10 | 相談のタイミングで悩んだ経験は？ | 相談記録を月で絞り込み。指定なしは2件、各月は1件。網羅性は示さない |
+| 関連検索・年月任意 | 旧版のみの確認 | `stale_evidence` |
+| 関連検索・年月任意 | 取得失敗の確認 | 503 `retrieval_failed` |
+| 関連検索・指定なし | 処理失敗の確認 | 既存の500 `question_processing_failed` |
+
+用途・年月不正、月用途の年月なし、未定義項目は422。画面では用途・対象月・範囲・取得/使用件数・全文入力の完了・省略・状態・確認日時を表示する。65秒のFE期限、重複送信防止、失敗時の入力保持、新しいチャットのリセットを適用する。
+
+fakeの入力予算は質問・文書本文・ID・版の文字数と指示用1,000文字で保守的に判定し、20,000を上限とする。文書数50件・本文UTF-8合計1 MiBもusecaseで検査する。これは実モデルのtoken計測ではない。実接続時のtokenizer、出力枠、BEの60秒期限と一時障害の再試行は実adapter導入時に検証する。原文はfake応答に含める。原文取得API、実際の現行版確認と同期は未実装。
+
+受入条件は、2文書の全文が生成interfaceへ渡ること、引用不整合が502になること、状態別に生成有無が正しいこと、OpenAPI型生成・API・FE単体・PC/SPの実HTTP E2Eが成功することとする。実機キーボード・縦横表示は別途確認する。
