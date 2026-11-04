@@ -7,6 +7,7 @@ const root = fileURLToPath(new URL('../../../', import.meta.url))
 const backendPort = process.env.RETROSPRINT_E2E_BACKEND_PORT || '8000'
 const frontendPort = process.env.RETROSPRINT_E2E_FRONTEND_PORT || '3000'
 const apiBase = `http://localhost:${backendPort}`
+const visualTest = process.env.RETROSPRINT_VISUAL_TEST === '1'
 let backend: ChildProcess | undefined
 async function startBackend() {
   // A pre-existing server must never make this test pass accidentally.
@@ -186,16 +187,21 @@ for (const width of [390, 1280]) {
     await expect(page.getByText('取得 2件 / 生成入力 2件', { exact: false })).toBeVisible()
     await expect(page.getByText('対象月の文書全文', { exact: false })).toBeVisible()
     await expect(page.getByText('状態：answered', { exact: false })).toBeVisible()
+    if (visualTest) await page.getByTestId('checked-at').evaluate(node => { node.textContent = '2026-09-30T00:00:00+00:00' })
+    await page.locator('.answer-text').scrollIntoViewIfNeeded()
     await page.screenshot({ path: testInfo.outputPath(`monthly-coverage-${width}.png`), fullPage: true })
+    if (visualTest) await expect(page).toHaveScreenshot(`monthly-coverage-${width}.png`, { fullPage: true })
     await page.getByText('出典を確認', { exact: true }).first().click()
     await expect(page.getByText('reflection-2026-09 / v1', { exact: true })).toBeVisible()
     await page.locator('.citation').first().locator('.original-text').scrollIntoViewIfNeeded()
     await page.screenshot({ path: testInfo.outputPath(`monthly-source-1-${width}.png`), fullPage: true })
+    if (visualTest) await expect(page).toHaveScreenshot(`monthly-source-1-${width}.png`, { fullPage: true })
     await page.getByText('出典を確認', { exact: true }).last().click()
     await expect(page.getByText('consultation-2026-09 / v2', { exact: true })).toBeVisible()
     await page.locator('.citation').last().locator('.original-text').scrollIntoViewIfNeeded()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`monthly-source-2-${width}.png`), fullPage: true })
+    if (visualTest) await expect(page).toHaveScreenshot(`monthly-source-2-${width}.png`, { fullPage: true })
     for (const [value, status] of [['2025-01', 'no_documents'], ['2026-08', 'input_limit_exceeded']] as const) {
       await month.fill(value); await send.click()
       await expect(page.getByText(`状態：${status}`, { exact: false })).toBeVisible()

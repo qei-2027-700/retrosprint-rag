@@ -55,3 +55,23 @@ mise exec -- uv run --directory backend python -m http.server 3000 --bind localh
 静的配信では接続先設定は生成時に埋め込まれる。接続先を変更したら `NUXT_PUBLIC_API_BASE_URL` を指定して `mise exec -- pnpm --dir frontend generate` を再実行する。静的配信サーバーの起動時に環境変数を変更しても反映されない。
 
 Playwrightのスクリーンショット・失敗時traceは `frontend/test-results/`、APIのE2Eログは `.logs/e2e-backend.log` に出力する。実機のキーボード、縦横表示、スクリーンリーダーは自動検証の対象外であり、未確認。
+
+## 画面のビジュアル回帰テスト
+
+月の振り返りの回答画面と、2件の引用元を開いた画面を390px・1280pxで比較する。正解画像は `tests/e2e/connectivity.spec.ts-snapshots/` に保存し、Gitで管理する。撮影時だけ確認日時を固定し、画像差分の許容閾値は設けない。
+
+Dockerを起動してリポジトリのルートで実行する。スクリプトはPlaywright 1.64.1の公式Ubuntu NobleイメージをLinux amd64で使い、固定したmise・pnpm・uvの依存を導入し、静的サイトを生成して比較する。CIも同じスクリプトを実行する。Apple Siliconではamd64のエミュレーションを使う。
+
+```sh
+scripts/run-visual-tests.sh
+```
+
+画面を意図的に変更した場合は、同じ環境で正解画像を更新する。
+
+```sh
+scripts/run-visual-tests.sh --update-snapshots
+```
+
+更新後は6枚のPNGと `git diff --stat`・`git diff -- frontend/tests/e2e/connectivity.spec.ts-snapshots/` を確認し、想定した箇所だけ変わったことを確かめてからコミットする。PNGは画像ビューアでも新旧を見比べる。CIは正解画像を更新しない。失敗時の expected・actual・diff 画像とtraceは `frontend/test-results/` に保存し、CIでは `validation-results` artifactから確認する。
+
+通常の `mise run test:e2e` は、実APIとの通信、入力、エラー、レスポンシブ動作を検証し、調査用の画面画像を `test-results/` に残す。`mise run check` はこの機能検証を含む。ビジュアル回帰テストは上記スクリプトで追加実行する。調査用画像は7日で消えるCI artifactであり、正解画像としては使わない。
