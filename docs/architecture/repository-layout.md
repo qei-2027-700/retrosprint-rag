@@ -1,6 +1,6 @@
 # リポジトリ構成
 
-更新日：2026年10月20日。backend・frontendの疎通構成とCI、BEの開発用Composeを実装済み。業務機能、DB・AWS接続、infraは未実装。
+更新日：2026年11月5日。backend・frontendの疎通構成とCI、BEの開発用Compose、ビジュアル回帰テストを実装済み。業務機能、DB・AWS接続、infraは未実装。
 
 本書を現在の配置と今後の配置方針の参照先とする。構成図は現在の管理対象を示す。未実装の配置は後述し、必要な実装が生じたときに追加する。
 
@@ -49,11 +49,14 @@ retrosprint-rag/
 │   │   ├── connectivity.test.ts
 │   │   ├── contract.typecheck.ts
 │   │   ├── tsconfig.json
-│   │   └── e2e/connectivity.spec.ts
+│   │   └── e2e/
+│   │       ├── connectivity.spec.ts
+│   │       └── connectivity.spec.ts-snapshots/
 │   ├── nuxt.config.ts
 │   ├── tsconfig.json
 │   ├── vitest.config.ts
 │   ├── playwright.config.ts
+│   ├── Dockerfile.visual
 │   ├── package.json
 │   └── pnpm-lock.yaml
 ├── docs/
@@ -63,7 +66,9 @@ retrosprint-rag/
 │   ├── adr/
 │   ├── rules/
 │   └── planning/
-├── scripts/check-generated.mjs
+├── scripts/
+│   ├── check-generated.mjs
+│   └── run-visual-tests.sh
 ├── .github/workflows/ci.yml
 ├── .gitignore
 ├── AGENTS.md

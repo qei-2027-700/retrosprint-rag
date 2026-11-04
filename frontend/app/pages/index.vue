@@ -33,7 +33,7 @@ function example() { if (!pending.value) input.value = '最近うまくいった
             <p>用途：{{ result.retrieval_mode === 'monthly_reflection' ? '月の振り返り' : '関連する経験の検索' }} · 対象月：{{ result.reflection_month || '指定なし' }}</p>
             <p>取得範囲：{{ result.coverage.scope === 'month_documents' ? '対象月の文書全文' : '関連箇所（最大5箇所・網羅しません）' }}</p>
             <p>取得 {{ result.coverage.documents_retrieved }}件 / 生成入力 {{ result.coverage.documents_used }}件 · 全文入力：{{ result.coverage.complete ? '完了' : '対象外または未完了' }} · 省略：{{ result.coverage.omitted ? 'あり' : 'なし' }}</p>
-            <p>状態：{{ result.status }} · 確認日時：{{ result.coverage.checked_at }}</p>
+            <p>状態：{{ result.status }} · 確認日時：<span data-testid="checked-at">{{ result.coverage.checked_at }}</span></p>
             <p v-if="result.message">{{ result.message }}</p>
             <template v-if="result.status === 'answered'">
               <p class="answer-text">{{ result.answer.text }}</p>

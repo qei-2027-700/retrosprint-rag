@@ -19,9 +19,11 @@ jobs:
       - run: mise run setup
       - run: mise run browser:install:ci
       - run: mkdir -p .logs && mise run check > .logs/check.log 2>&1
+      - name: Compare visual snapshots in Playwright image
+        run: scripts/run-visual-tests.sh > .logs/visual.log 2>&1
       - name: Show validation log
         if: always()
-        run: if [ -f .logs/check.log ]; then tail -100 .logs/check.log; fi
+        run: for log in .logs/check.log .logs/visual.log; do if [ -f "$log" ]; then tail -100 "$log"; fi; done
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -30,11 +32,4 @@ jobs:
           path: |
             .logs/
             frontend/test-results/
-          retention-days: 7
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
-        with:
-          name: ui-screenshots
-          path: frontend/test-results/**/monthly-*.png
-          if-no-files-found: ignore
           retention-days: 7

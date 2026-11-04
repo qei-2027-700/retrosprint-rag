@@ -1,0 +1,8 @@
+FROM mcr.microsoft.com/playwright:v1.64.1-noble
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl git ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL https://mise.run | MISE_VERSION=v2026.3.7 sh
+
+ENV PATH="/root/.local/bin:${PATH}"
+WORKDIR /workspace
