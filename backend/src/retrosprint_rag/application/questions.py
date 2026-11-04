@@ -60,7 +60,7 @@ class AskQuestion:
         def empty(status: Status, message: str) -> QuestionResult:
             return QuestionResult(status, None, [], coverage, message)
 
-        if omitted:
+        if exceeded or (monthly and evidence.omitted):
             return empty(
                 "input_limit_exceeded",
                 "全文を処理できません。取得件数は確認できた件数の下限です。対象を見直してください。",

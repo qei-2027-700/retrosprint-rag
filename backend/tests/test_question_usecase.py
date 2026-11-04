@@ -65,6 +65,37 @@ def test_limit_skips_generation(kind: str) -> None:
     assert result.coverage.documents_used == 0
 
 
+def test_related_search_can_answer_with_some_matches_omitted() -> None:
+    evidence = replace(make_evidence(DOCUMENTS[:1]), omitted=True)
+    search = Mock(spec=Search)
+    search.search.return_value = evidence
+    generation = Mock(spec=Generation)
+    generation.generate.return_value = Answer("answer", ["c1"])
+
+    result = AskQuestion(search, generation, FakeMonthDocuments()).execute("question")
+
+    generation.generate.assert_called_once_with("question", evidence, result.coverage)
+    assert result.status == "answered"
+    assert result.coverage.omitted
+    assert not result.coverage.complete
+    assert result.coverage.documents_used == 1
+
+
+def test_month_with_missing_documents_skips_generation() -> None:
+    evidence = replace(make_evidence(DOCUMENTS[:1]), omitted=True)
+    months = Mock(spec=MonthDocuments)
+    months.fetch_month.return_value = evidence
+    generation = Mock(spec=Generation)
+
+    result = AskQuestion(Mock(spec=Search), generation, months).execute(
+        "question", "monthly_reflection", "2026-09"
+    )
+
+    generation.generate.assert_not_called()
+    assert result.status == "input_limit_exceeded"
+    assert result.coverage.documents_used == 0
+
+
 def test_empty_month_and_retrieval_failure_skip_generation() -> None:
     generation = Mock(spec=Generation)
     usecase = AskQuestion(FakeSearch(), generation, FakeMonthDocuments())
